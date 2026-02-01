@@ -1,35 +1,37 @@
-'use client'
+"use client";
 
-import React from "react"
+import React from "react";
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
-import { TenantSidebar } from '@/components/layout/tenant-sidebar'
-import { Topbar } from '@/components/layout/topbar'
-import { useAuth } from '@/providers/auth-provider'
-import { useTenant } from '@/providers/tenant-provider'
-import { Skeleton } from '@/components/ui/skeleton'
+import { TenantSidebar } from "@/components/layout/tenant-sidebar";
+import { Topbar } from "@/components/layout/topbar";
+import { useAuth } from "@/providers/auth-provider";
+import { useTenant } from "@/providers/tenant-provider";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function TenantLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const router = useRouter()
-  const { isAuthenticated, isLoading: authLoading } = useAuth()
-  const { isLoading: tenantLoading, isSuperAdmin } = useTenant()
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const { isLoading: tenantLoading, isSuperAdmin } = useTenant();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push('/login')
+      router.push("/login");
     }
     // Redirect super admin users to super admin dashboard
-    if (!authLoading && isAuthenticated && isSuperAdmin) {
-      router.push('/super-admin')
+    // Check both the domain flag (isSuperAdmin) AND the user role
+    const isSuperUser = user?.role === "super-admin";
+    if (!authLoading && isAuthenticated && (isSuperAdmin || isSuperUser)) {
+      router.push("/super-admin");
     }
-  }, [isAuthenticated, authLoading, isSuperAdmin, router])
+  }, [isAuthenticated, authLoading, isSuperAdmin, router, user]);
 
   // Show loading state
   if (authLoading || tenantLoading) {
@@ -64,23 +66,25 @@ export default function TenantLayout({
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   // Don't render if not authenticated
   if (!isAuthenticated) {
-    return null
+    return null;
   }
 
   return (
     <div className="flex h-screen overflow-hidden">
       <TenantSidebar isCollapsed={sidebarCollapsed} />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Topbar onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)} />
+        <Topbar
+          onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6 bg-muted/30">
           {children}
         </main>
       </div>
     </div>
-  )
+  );
 }
