@@ -21,7 +21,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useAuth } from "@/providers/auth-provider";
+import axiosClient from "@/lib/axios-client";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -32,7 +32,6 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -47,11 +46,15 @@ export default function LoginPage() {
   async function onSubmit(data: LoginFormValues) {
     setIsLoading(true);
     try {
-      await login(data.email, data.password);
+      const res = await axiosClient.post("/auth/login", data);
       toast.success("Welcome back!");
-      router.push("/dashboard");
-    } catch (error) {
-      toast.error("Invalid credentials. Please try again.");
+      if (res.data.defaultRoute) {
+        router.push(res.data.defaultRoute);
+      }
+    } catch (error: any) {
+      form.setError("root", {
+        message: error.response.data.message,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -88,6 +91,11 @@ export default function LoginPage() {
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {form.formState.errors.root && (
+                <div className="text-red-500 text-sm text-center">
+                  {form.formState.errors.root.message}
+                </div>
+              )}
               <FormField
                 control={form.control}
                 name="email"

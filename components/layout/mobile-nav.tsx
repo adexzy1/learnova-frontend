@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/collapsible'
 
 import { useTenant } from '@/providers/tenant-provider'
-import { useAuth } from '@/providers/auth-provider'
+import { useAuth } from '@/providers/tenant-auth-provider'
 import { 
   tenantNavigation, 
   parentNavigation, 
@@ -27,6 +27,24 @@ import {
 
 interface MobileNavProps {
   onNavigate?: () => void
+}
+
+type AccessControl = {
+  hasPermission: (permission: string) => boolean
+  hasAnyPermission: (permissions: string[]) => boolean
+}
+
+function canAccessItem(item: NavItem, access: AccessControl) {
+  if (!item.permission) return true
+  return Array.isArray(item.permission)
+    ? access.hasAnyPermission(item.permission)
+    : access.hasPermission(item.permission)
+}
+
+function isItemVisible(item: NavItem, access: AccessControl): boolean {
+  if (!canAccessItem(item, access)) return false
+  if (!item.children || item.children.length === 0) return true
+  return item.children.some((child) => isItemVisible(child, access))
 }
 
 function MobileNavItem({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
@@ -114,7 +132,7 @@ function MobileNavSection({ section, onNavigate }: { section: NavSection; onNavi
 
 export function MobileNav({ onNavigate }: MobileNavProps) {
   const { tenant, isSuperAdmin } = useTenant()
-  const { user } = useAuth()
+  const { user, hasPermission, hasAnyPermission } = useAuth()
 
   // Determine which navigation to use based on user role and domain
   let navigation: NavSection[]
@@ -127,6 +145,18 @@ export function MobileNav({ onNavigate }: MobileNavProps) {
   } else {
     navigation = tenantNavigation
   }
+
+  const access: AccessControl = {
+    hasPermission,
+    hasAnyPermission,
+  }
+
+  const visibleNavigation = navigation
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => isItemVisible(item, access)),
+    }))
+    .filter((section) => section.items.length > 0)
 
   return (
     <div className="flex flex-col h-full">
@@ -143,7 +173,7 @@ export function MobileNav({ onNavigate }: MobileNavProps) {
       {/* Navigation */}
       <ScrollArea className="flex-1 px-2 py-4">
         <nav className="space-y-4">
-          {navigation.map((section) => (
+          {visibleNavigation.map((section) => (
             <MobileNavSection 
               key={section.title} 
               section={section}

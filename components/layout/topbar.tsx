@@ -1,22 +1,22 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { 
-  Bell, 
-  Menu, 
-  LogOut, 
-  User, 
-  Settings, 
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  Bell,
+  Menu,
+  LogOut,
+  User,
+  Settings,
   ChevronDown,
   GraduationCap,
   Wifi,
   WifiOff,
-} from 'lucide-react'
+} from "lucide-react";
 
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,34 +24,36 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
-import { useTenant } from '@/providers/tenant-provider'
-import { useAuth } from '@/providers/auth-provider'
-import { useOffline } from '@/hooks/use-offline'
-import { MobileNav } from './mobile-nav'
+import { useTenant } from "@/providers/tenant-provider";
+// import { useAuth } from "@/providers/auth-provider";
+import { useOffline } from "@/hooks/use-offline";
+import { MobileNav } from "./mobile-nav";
+import { useAuth } from "@/providers/tenant-auth-provider";
 
 interface TopbarProps {
-  onToggleSidebar?: () => void
+  onToggleSidebar?: () => void;
 }
 
 export function Topbar({ onToggleSidebar }: TopbarProps) {
-  const router = useRouter()
-  const { tenant, isSuperAdmin } = useTenant()
-  const { user, logout } = useAuth()
-  const { isOnline, unsyncedCount } = useOffline()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { user } = useAuth();
+  const router = useRouter();
+  // const { tenant, isSuperAdmin } = useTenant()
+  // const { user, logout } = useAuth()
+  const { isOnline, unsyncedCount } = useOffline();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
-    await logout()
-    router.push('/login')
-  }
+    // await logout()
+    router.push("/login");
+  };
 
   const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
-  }
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  };
 
   return (
     <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-background px-4 lg:px-6">
@@ -85,7 +87,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
           <GraduationCap className="h-4 w-4" />
         </div>
         <span className="font-semibold text-sm truncate max-w-[150px]">
-          {isSuperAdmin ? 'Super Admin' : tenant.schoolName}
+          {user?.isSystem ? "Super Admin" : user?.tenantUsers[0].tenant.name}
         </span>
       </div>
 
@@ -136,7 +138,10 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <Link href="/notifications" className="w-full text-center justify-center">
+            <Link
+              href="/notifications"
+              className="w-full text-center justify-center"
+            >
               View all notifications
             </Link>
           </DropdownMenuItem>
@@ -148,9 +153,12 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="flex items-center gap-2 px-2">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.firstName} />
+              <AvatarImage
+                src={user?.avatar || "/placeholder.svg"}
+                alt={user?.firstName}
+              />
               <AvatarFallback>
-                {user ? getInitials(user.firstName, user.lastName) : 'U'}
+                {user ? getInitials(user.firstName, user.lastName) : "U"}
               </AvatarFallback>
             </Avatar>
             <div className="hidden md:flex flex-col items-start">
@@ -158,7 +166,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
                 {user?.firstName} {user?.lastName}
               </span>
               <span className="text-xs text-muted-foreground capitalize">
-                {user?.role?.replace('-', ' ')}
+                {user?.role?.replace("-", " ")}
               </span>
             </div>
             <ChevronDown className="h-4 w-4 text-muted-foreground hidden md:block" />
@@ -180,12 +188,15 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive">
+          <DropdownMenuItem
+            onClick={handleLogout}
+            className="cursor-pointer text-destructive"
+          >
             <LogOut className="mr-2 h-4 w-4" />
             Logout
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>
-  )
+  );
 }

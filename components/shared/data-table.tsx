@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import {
   ColumnDef,
@@ -10,9 +10,17 @@ import {
   SortingState,
   getFilteredRowModel,
   ColumnFiltersState,
-} from '@tanstack/react-table'
-import { useState } from 'react'
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from 'lucide-react'
+  PaginationState,
+  OnChangeFn,
+} from "@tanstack/react-table";
+import { useState, useEffect } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Search,
+} from "lucide-react";
 
 import {
   Table,
@@ -21,44 +29,91 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Skeleton } from '@/components/ui/skeleton'
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
 
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  data: TData[]
-  isLoading?: boolean
-  searchPlaceholder?: string
-  searchColumn?: string
-  pageSize?: number
-  emptyMessage?: string
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
+  isLoading?: boolean;
+  searchPlaceholder?: string;
+  searchColumn?: string;
+  pageSize?: number;
+  emptyMessage?: string;
+  pageCount?: number;
+  pagination?: {
+    pageIndex: number;
+    pageSize: number;
+  };
+  onPaginationChange?: OnChangeFn<PaginationState>;
+  search?: string;
+  onSearchChange?: (value: string) => void;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   isLoading,
-  searchPlaceholder = 'Search...',
+  searchPlaceholder = "Search...",
   searchColumn,
   pageSize = 10,
-  emptyMessage = 'No results found.',
+  emptyMessage = "No results found.",
+  pageCount,
+  pagination,
+  onPaginationChange,
+  search,
+  onSearchChange,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [globalFilter, setGlobalFilter] = useState('')
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [globalFilter, setGlobalFilter] = useState("");
+
+  // Local state for debounced search
+  const [localSearchValue, setLocalSearchValue] = useState(search || "");
+
+  // Debounce search input
+  useEffect(() => {
+    if (onSearchChange) {
+      const handler = setTimeout(() => {
+        onSearchChange(localSearchValue);
+      }, 500); // 500ms debounce delay
+
+      return () => {
+        clearTimeout(handler);
+      };
+    }
+  }, [localSearchValue, onSearchChange]);
+
+  // Sync local search value with external search prop
+  useEffect(() => {
+    if (search !== undefined && search !== localSearchValue) {
+      setLocalSearchValue(search);
+    }
+  }, [search]);
+
+  // Internal state for client-side pagination if not controlled
+  const [internalPagination, setInternalPagination] = useState<PaginationState>(
+    {
+      pageIndex: 0,
+      pageSize: pageSize,
+    },
+  );
 
   const table = useReactTable({
     data,
     columns,
+    pageCount: pageCount ?? -1, // -1 means we don't know the page count (client-side default)
+    manualPagination: !!pageCount, // Enable manual pagination if pageCount is provided
+    manualFiltering: !!pageCount, // Enable manual filtering if server-side pagination is on
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -66,17 +121,19 @@ export function DataTable<TData, TValue>({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
+    onPaginationChange: onPaginationChange || setInternalPagination,
     state: {
       sorting,
       columnFilters,
       globalFilter,
+      pagination: pagination || internalPagination,
     },
     initialState: {
       pagination: {
         pageSize,
       },
     },
-  })
+  });
 
   if (isLoading) {
     return (
@@ -109,7 +166,7 @@ export function DataTable<TData, TValue>({
           </Table>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -120,15 +177,22 @@ export function DataTable<TData, TValue>({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder={searchPlaceholder}
-            value={searchColumn 
-              ? (table.getColumn(searchColumn)?.getFilterValue() as string) ?? ''
-              : globalFilter
+            value={
+              onSearchChange
+                ? localSearchValue
+                : searchColumn
+                  ? ((table
+                      .getColumn(searchColumn)
+                      ?.getFilterValue() as string) ?? "")
+                  : globalFilter
             }
             onChange={(e) => {
-              if (searchColumn) {
-                table.getColumn(searchColumn)?.setFilterValue(e.target.value)
+              if (onSearchChange) {
+                setLocalSearchValue(e.target.value);
+              } else if (searchColumn) {
+                table.getColumn(searchColumn)?.setFilterValue(e.target.value);
               } else {
-                setGlobalFilter(e.target.value)
+                setGlobalFilter(e.target.value);
               }
             }}
             className="pl-9"
@@ -148,7 +212,7 @@ export function DataTable<TData, TValue>({
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}
@@ -161,14 +225,20 @@ export function DataTable<TData, TValue>({
                 <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   {emptyMessage}
                 </TableCell>
               </TableRow>
@@ -200,7 +270,7 @@ export function DataTable<TData, TValue>({
 
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">
-            Page {table.getState().pagination.pageIndex + 1} of{' '}
+            Page {table.getState().pagination.pageIndex + 1} of{" "}
             {table.getPageCount()}
           </span>
           <div className="flex items-center gap-1">
@@ -244,5 +314,5 @@ export function DataTable<TData, TValue>({
         </div>
       </div>
     </div>
-  )
+  );
 }

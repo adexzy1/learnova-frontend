@@ -15,14 +15,36 @@ import {
 } from "@/components/ui/collapsible";
 
 import { useTenant } from "@/providers/tenant-provider";
-import { useAuth } from "@/providers/auth-provider";
+import { useAuth } from "@/providers/tenant-auth-provider";
 import {
   tenantNavigation,
   parentNavigation,
   studentNavigation,
   type NavItem,
   type NavSection,
+  superAdminNavigation,
 } from "@/lib/navigation";
+import { PERMISSIONS } from "@/app/constants/permissions";
+
+type AccessControl = {
+  isSuperAdmin: boolean;
+  hasPermission: (permission: string) => boolean;
+  hasAnyPermission: (permissions: string[]) => boolean;
+};
+
+function canAccessItem(item: NavItem, access: AccessControl) {
+  if (access.isSuperAdmin) return true;
+  if (!item.permission) return true;
+  return Array.isArray(item.permission)
+    ? access.hasAnyPermission(item.permission)
+    : access.hasPermission(item.permission);
+}
+
+function isItemVisible(item: NavItem, access: AccessControl): boolean {
+  if (!canAccessItem(item, access)) return false;
+  if (!item.children || item.children.length === 0) return true;
+  return item.children.some((child) => isItemVisible(child, access));
+}
 
 function NavItemComponent({
   item,
@@ -151,23 +173,37 @@ export function TenantSidebar({
   userName: propUserName,
 }: TenantSidebarProps) {
   const { tenant } = useTenant();
-  const { user } = useAuth();
+  const { user, hasPermission, hasAnyPermission } = useAuth();
 
   // Determine which navigation to use
   let navigation: NavSection[];
 
-  if (propNavigation) {
-    navigation = propNavigation;
-  } else if (user?.role === "parent") {
+  if (hasPermission(PERMISSIONS.PORTAL_GUARDIAN)) {
     navigation = parentNavigation;
-  } else if (user?.role === "student") {
+  } else if (hasPermission(PERMISSIONS.PORTAL_STUDENT)) {
     navigation = studentNavigation;
-  } else {
+  } else if (
+    hasAnyPermission([PERMISSIONS.PORTAL_STAFF, PERMISSIONS.PORTAL_ADMIN])
+  ) {
     navigation = tenantNavigation;
+  } else if (user?.isSystem) {
+    navigation = superAdminNavigation;
+  } else {
+    navigation = [];
   }
 
-  const displayTenantName =
-    propTenantName || tenant?.schoolName || "School Name";
+  const access: AccessControl = {
+    isSuperAdmin: user?.isSystem ?? false,
+    hasPermission,
+    hasAnyPermission,
+  };
+
+  const visibleNavigation = navigation
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => isItemVisible(item, access)),
+    }))
+    .filter((section) => section.items.length > 0);
 
   return (
     <aside
@@ -188,7 +224,7 @@ export function TenantSidebar({
         </div>
         {!isCollapsed && (
           <span className="font-semibold text-sm truncate">
-            {displayTenantName}
+            {user?.isSystem ? "Super Admin" : user?.tenantUsers[0].tenant.name}
           </span>
         )}
       </div>
@@ -196,7 +232,7 @@ export function TenantSidebar({
       {/* Navigation */}
       <ScrollArea className="flex-1 px-2 py-4">
         <nav className="space-y-4">
-          {navigation.map((section) => (
+          {visibleNavigation.map((section) => (
             <NavSectionComponent
               key={section.title}
               section={section}

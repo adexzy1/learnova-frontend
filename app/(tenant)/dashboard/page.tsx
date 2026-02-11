@@ -1,47 +1,54 @@
-'use client'
+"use client";
 
-import React from "react"
+import React from "react";
 
-import { useQuery } from '@tanstack/react-query'
-import { 
-  Users, 
-  GraduationCap, 
-  BookOpen, 
+import { useQuery } from "@tanstack/react-query";
+import {
+  Users,
+  GraduationCap,
+  BookOpen,
   CreditCard,
   TrendingUp,
   Calendar,
   Clock,
   ArrowUpRight,
   ArrowDownRight,
-} from 'lucide-react'
+} from "lucide-react";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-import { useAuth } from '@/providers/auth-provider'
-import { useTenant } from '@/providers/tenant-provider'
-import { fetchDashboardStats, type DashboardStats } from '@/lib/api'
-import { formatCurrency, formatNumber } from '@/lib/format'
-import { DashboardCharts } from '@/features/dashboard/dashboard-charts'
-import { RecentActivity } from '@/features/dashboard/recent-activity'
-import { QuickActions } from '@/features/dashboard/quick-actions'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+// import { useAuth } from "@/providers/auth-provider";
+// import { useTenant } from "@/providers/tenant-provider";
+import { fetchDashboardStats, type DashboardStats } from "@/lib/api";
+import { formatCurrency, formatNumber } from "@/lib/format";
+import { DashboardCharts } from "@/features/dashboard/dashboard-charts";
+import { RecentActivity } from "@/features/dashboard/recent-activity";
+import { QuickActions } from "@/features/dashboard/quick-actions";
+import { useAuth } from "@/providers/tenant-auth-provider";
 
-function StatCard({ 
-  title, 
-  value, 
-  description, 
-  icon: Icon, 
+function StatCard({
+  title,
+  value,
+  description,
+  icon: Icon,
   trend,
   trendValue,
   isLoading,
-}: { 
-  title: string
-  value: string | number
-  description?: string
-  icon: React.ComponentType<{ className?: string }>
-  trend?: 'up' | 'down'
-  trendValue?: string
-  isLoading?: boolean
+}: {
+  title: string;
+  value: string | number;
+  description?: string;
+  icon: React.ComponentType<{ className?: string }>;
+  trend?: "up" | "down";
+  trendValue?: string;
+  isLoading?: boolean;
 }) {
   if (isLoading) {
     return (
@@ -55,7 +62,7 @@ function StatCard({
           <Skeleton className="h-3 w-20" />
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -72,12 +79,14 @@ function StatCard({
           <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
             {trend && trendValue && (
               <>
-                {trend === 'up' ? (
+                {trend === "up" ? (
                   <ArrowUpRight className="h-3 w-3 text-green-500" />
                 ) : (
                   <ArrowDownRight className="h-3 w-3 text-red-500" />
                 )}
-                <span className={trend === 'up' ? 'text-green-500' : 'text-red-500'}>
+                <span
+                  className={trend === "up" ? "text-green-500" : "text-red-500"}
+                >
                   {trendValue}
                 </span>
               </>
@@ -87,29 +96,31 @@ function StatCard({
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
 
 export default function DashboardPage() {
-  const { user } = useAuth()
-  const { tenant } = useTenant()
+  const { user } = useAuth();
+  console.log(user);
+  // const { user } = useAuth()
+  // const { tenant } = useTenant()
 
   const { data: stats, isLoading } = useQuery<DashboardStats>({
-    queryKey: ['dashboard-stats'],
+    queryKey: ["dashboard-stats"],
     queryFn: fetchDashboardStats,
-  })
+  });
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col gap-2">
+      {/* <div className="flex flex-col gap-2">
         <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">
           Welcome back, {user?.firstName}
         </h1>
         <p className="text-muted-foreground">
           Here's what's happening at {tenant.schoolName} today.
         </p>
-      </div>
+      </div> */}
 
       {/* Quick Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -148,7 +159,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <QuickActions />
+      {/* <QuickActions /> */}
 
       {/* Charts and Activity */}
       <div className="grid gap-6 lg:grid-cols-7">
@@ -156,7 +167,10 @@ export default function DashboardPage() {
           <DashboardCharts />
         </div>
         <div className="lg:col-span-3">
-          <RecentActivity activities={stats?.recentActivities || []} isLoading={isLoading} />
+          <RecentActivity
+            activities={stats?.recentActivities || []}
+            isLoading={isLoading}
+          />
         </div>
       </div>
 
@@ -164,7 +178,9 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Classes</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Active Classes
+            </CardTitle>
             <BookOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -175,18 +191,24 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Upcoming Exams</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Upcoming Exams
+            </CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.upcomingExams || 0}</div>
+            <div className="text-2xl font-bold">
+              {stats?.upcomingExams || 0}
+            </div>
             <p className="text-xs text-muted-foreground">scheduled this term</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Academic Performance</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Academic Performance
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -201,5 +223,5 @@ export default function DashboardPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
