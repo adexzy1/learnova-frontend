@@ -18,7 +18,6 @@ const ClassArm = ({ arm, classId }: ClassArmProps) => {
     selectedArm,
     confirmDeleteArm,
     isDeleting,
-    setArmDialogOpen,
   } = useClassArm(classId);
 
   return (

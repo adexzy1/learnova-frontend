@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PageHeader } from "@/components/shared/page-header";
-import { DataTable } from "@/components/shared/data-table";
+import { DataTable } from "@/components/shared/table/data-table";
 import type { Term, PaginatedResponse } from "@/types";
 import { queryKeys } from "@/app/constants/queryKeys";
 import axiosClient from "@/lib/axios-client";

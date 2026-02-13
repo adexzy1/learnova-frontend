@@ -136,9 +136,11 @@ export interface Student {
   email?: string;
   phone?: string;
   address: string;
-  photo?: string;
+  passportUrl?: string;
   classId: string;
+  classArm?: string;
   className?: string;
+  createUserAccount?: boolean;
   status: "active" | "inactive" | "graduated" | "suspended";
   guardians: Guardian[];
   enrollmentDate: string;
@@ -153,6 +155,7 @@ export interface Guardian {
   phone: string;
   address: string;
   isPrimary: boolean;
+  createUserAccount?: boolean;
 }
 
 export interface AdmissionApplication {

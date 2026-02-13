@@ -33,7 +33,6 @@ export default function ClassesPage() {
   });
 
   const classes = classesResponse?.data || [];
-  console.log(classes);
 
   if (isLoading) {
     return (

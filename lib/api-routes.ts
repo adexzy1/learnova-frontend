@@ -34,10 +34,27 @@ export const TERM_ENDPOINTS = {
 
 export const CLASS_ENDPOINTS = {
   GET_ALL_CLASSES: "/academics/class",
+  GET_ALL_CLASS_ARMS: "/academics/class/arm",
   GET_CLASS_BY_ID: "/academics/class/:id",
   CREATE_CLASS: "/academics/class",
   CREATE_CLASS_ARM: "/academics/class/arm",
   UPDATE_CLASS: "/academics/class/:id",
   DELETE_CLASS: "/academics/class/:id",
   DELETE_CLASS_ARM: "/academics/class/arm/:id",
+};
+
+export const SUBJECT_ENDPOINTS = {
+  GET_ALL_SUBJECTS: "/academics/subject",
+  GET_SUBJECT_BY_ID: "/academics/subject/:id",
+  CREATE_SUBJECT: "/academics/subject",
+  UPDATE_SUBJECT: "/academics/subject/:id",
+  DELETE_SUBJECT: "/academics/subject/:id",
+};
+
+export const STUDENT_ENDPOINTS = {
+  GET_ALL_STUDENTS: "/people/students",
+  GET_STUDENT_BY_ID: "/people/students/:id",
+  CREATE_STUDENT: "/people/students",
+  UPDATE_STUDENT: "/people/students/:id",
+  DELETE_STUDENT: "/people/students/:id",
 };

@@ -14,9 +14,10 @@ export const guardianSchema = z.object({
   lastName: z.string().min(2, "Last name is required"),
   relationship: z.string().min(1, "Relationship is required"),
   email: z.string().email("Invalid email"),
-  phone: z.string().min(10, "Phone number is required"),
+  phoneNumber: z.string().min(10, "Phone number is required"),
   address: z.string().min(5, "Address is required"),
   isPrimary: z.boolean().default(false),
+  createUserAccount: z.boolean().default(false),
 });
 
 export const studentSchema = z.object({
@@ -28,7 +29,10 @@ export const studentSchema = z.object({
   email: z.string().email().optional().or(z.literal("")),
   phone: z.string().optional(),
   address: z.string().min(5, "Address is required"),
-  classId: z.string().min(1, "Class is required"),
+  admissionNumber: z.string().min(1, "Admission number is required"),
+  classArm: z.string().min(1, "Class is required"),
+  passport: z.any().optional(),
+  createUserAccount: z.boolean().default(false),
   guardians: z
     .array(guardianSchema)
     .min(1, "At least one guardian is required"),

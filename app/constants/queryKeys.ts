@@ -3,4 +3,6 @@ export const queryKeys = {
   SESSION: "session",
   TERM: "term",
   CLASSES: "classes",
+  SUBJECTS: "subjects",
+  STUDENTS: "students",
 } as const;

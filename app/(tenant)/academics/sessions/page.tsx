@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { PageHeader } from "@/components/shared/page-header";
-import { DataTable } from "@/components/shared/data-table";
+import { DataTable } from "@/components/shared/table/data-table";
 import { formatDate } from "@/lib/format";
 import type { Session, PaginatedResponse } from "@/types";
 import { queryKeys } from "@/app/constants/queryKeys";
