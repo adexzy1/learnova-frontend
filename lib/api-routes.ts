@@ -58,3 +58,28 @@ export const STUDENT_ENDPOINTS = {
   UPDATE_STUDENT: "/people/students/:id",
   DELETE_STUDENT: "/people/students/:id",
 };
+
+export const TENANT_ENDPOINTS = {
+  GET_TENANT_BY_ID: "/tenant/:id",
+  GET_ALL_TENANTS: "/tenant",
+  CREATE_TENANT: "/tenant",
+  UPDATE_TENANT: "/tenant/:id",
+  DELETE_TENANT: "/tenant/:id",
+};
+
+export const PLAN_ENDPOINTS = {
+  GET_ALL_PLANS: "/subscription/plan",
+  GET_PLAN_BY_ID: "/subscription/plan/:id",
+  CREATE_PLAN: "/subscription/plan",
+  UPDATE_PLAN: "/subscription/plan/:id",
+  DELETE_PLAN: "/subscription/plan/:id",
+};
+
+export const SUBSCRIPTION_ENDPOINTS = {
+  GET_SUBSCRIPTION: "/subscription",
+  GET_PLANS: "/subscription/plan",
+  CHANGE_PLAN: "/subscription/change-plan",
+  INIT_PAYMENT: "/subscription/payment/initialize",
+  VERIFY_PAYMENT: "/subscription/payment/verify",
+  GET_BILLING_HISTORY: "/subscription/billing",
+};

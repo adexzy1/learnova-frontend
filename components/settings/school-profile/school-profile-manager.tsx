@@ -1,8 +1,5 @@
 "use client";
 import { Save } from "lucide-react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,15 +22,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { SchoolProfile } from "../types";
 import { useUpdateSchoolProfile } from "./service/school-profile.service";
 
-const schoolSettingsSchema = z.object({
-  schoolName: z.string().min(2, "School name is required"),
-  email: z.string().email("Invalid email"),
-  phone: z.string().min(10, "Phone number is required"),
-  address: z.string().min(10, "Address is required"),
-  website: z.string().url().optional().or(z.literal("")),
-  description: z.string().optional(),
-});
-
 interface SchoolProfileManagerProps {
   data?: SchoolProfile;
 }
@@ -41,25 +29,7 @@ interface SchoolProfileManagerProps {
 export default function SchoolProfileManager({
   data,
 }: SchoolProfileManagerProps) {
-  const { updateProfile, isPending } = useUpdateSchoolProfile();
-
-  console.log(data);
-
-  const form = useForm<z.infer<typeof schoolSettingsSchema>>({
-    resolver: zodResolver(schoolSettingsSchema),
-    defaultValues: {
-      schoolName: data?.schoolName || "",
-      email: data?.email || "",
-      phone: data?.phone || "",
-      address: data?.address || "",
-      website: data?.website || "",
-      description: data?.description || "",
-    },
-  });
-
-  async function onSubmit(values: z.infer<typeof schoolSettingsSchema>) {
-    await updateProfile(values);
-  }
+  const { updateProfile, isPending, form } = useUpdateSchoolProfile(data);
 
   return (
     <Card>
@@ -71,7 +41,10 @@ export default function SchoolProfileManager({
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form
+            onSubmit={form.handleSubmit(updateProfile)}
+            className="space-y-6"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}

@@ -46,7 +46,6 @@ export const ClassArmDialog = forwardRef<
   ClassArmDialogProps
 >(({ classLevelId }, ref) => {
   const {
-    session,
     form,
     createArmMutation,
     handleOpenChange,
@@ -88,7 +87,7 @@ export const ClassArmDialog = forwardRef<
                 </FormItem>
               )}
             />
-
+            {/* 
             <FormField
               control={form.control}
               name="session"
@@ -115,7 +114,7 @@ export const ClassArmDialog = forwardRef<
                   <FormMessage />
                 </FormItem>
               )}
-            />
+            /> */}
 
             <div className="flex justify-end gap-2">
               <Button

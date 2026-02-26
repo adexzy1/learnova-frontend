@@ -47,8 +47,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
-    // await logout()
-    router.push("/login");
+    router.push("/");
   };
 
   const getInitials = (firstName: string, lastName: string) => {
@@ -87,7 +86,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
           <GraduationCap className="h-4 w-4" />
         </div>
         <span className="font-semibold text-sm truncate max-w-[150px]">
-          {user?.isSystem ? "Super Admin" : user?.tenantUsers[0].tenant.name}
+          {user?.system ? "Super Admin" : user?.tenantUsers[0].tenant.name}
         </span>
       </div>
 

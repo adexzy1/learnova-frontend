@@ -7,7 +7,6 @@ export async function axiosServer() {
 
   const host = headerStore.get("host");
   const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-
   const cookieHeader = cookieStore
     .getAll()
     .map((c) => `${c.name}=${c.value}`)

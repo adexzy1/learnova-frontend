@@ -5,4 +5,9 @@ export const queryKeys = {
   CLASSES: "classes",
   SUBJECTS: "subjects",
   STUDENTS: "students",
+  TENANTS: "tenants",
+  PLANS: "plans",
+  SUBSCRIPTION: "subscription",
+  SUBSCRIPTION_PLANS: "subscription-plans",
+  BILLING_HISTORY: "billing-history",
 } as const;

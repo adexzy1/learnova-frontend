@@ -15,6 +15,82 @@ export interface TenantContext {
   academicConfig: AcademicConfig;
 }
 
+export interface Tenant {
+  id: string;
+  name: string;
+  status: "Active" | "Suspended" | "Inactive";
+  trialEndAt: string;
+  createdAt?: string;
+  domainName: string;
+  planId: string;
+  accountName: string;
+  firstName: string;
+  lastName: string;
+  bankCode: string;
+  accountNumber: string;
+  email: string;
+  phone: string;
+}
+
+export interface Plan {
+  id: string;
+  name: string;
+  price: string;
+}
+
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  price: number;
+  interval: "monthly" | "termly" | "yearly";
+  description: string;
+  features: string[];
+  maxStudents: number;
+  maxStaff: number;
+  maxStorage: number; // in GB
+  isPopular?: boolean;
+}
+
+export interface Subscription {
+  id: string;
+  tenantId: string;
+  planId: string;
+  plan: SubscriptionPlan;
+  status: "active" | "trial" | "expired" | "cancelled" | "past_due";
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  trialEndAt?: string;
+  cancelledAt?: string;
+  usage: {
+    students: number;
+    staff: number;
+    storageUsed: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BillingRecord {
+  id: string;
+  subscriptionId: string;
+  amount: number;
+  currency: string;
+  status: "paid" | "pending" | "failed" | "refunded";
+  description: string;
+  paymentMethod: string;
+  reference: string;
+  paidAt: string;
+  receiptUrl?: string;
+}
+
+export interface PaystackPaymentResponse {
+  reference: string;
+  status: string;
+  trans: string;
+  transaction: string;
+  message: string;
+}
+
 export interface AcademicConfig {
   currentSessionId: string;
   currentTermId: string;
@@ -48,8 +124,8 @@ export interface User {
   role: string;
   permissions: string[];
   tenantId?: string;
-  isSystem: boolean;
-  isActive: boolean;
+  system: boolean;
+  active: boolean;
   tenantUsers: Array<{
     role: string;
     tenant: {

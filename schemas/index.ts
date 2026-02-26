@@ -96,7 +96,6 @@ export type ClassLevelFormData = z.infer<typeof classLevelSchema>;
 
 export const classArmSchema = z.object({
   name: z.string().min(1, "Arm name is required"),
-  session: z.string().min(1, "Session is required"),
   classId: z.string().min(1, "Class is required"),
 });
 

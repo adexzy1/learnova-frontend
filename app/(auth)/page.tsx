@@ -11,8 +11,6 @@ import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -47,6 +45,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const res = await axiosClient.post("/auth/login", data);
+      console.log(res);
       toast.success("Welcome back!");
       if (res.data.defaultRoute) {
         router.push(res.data.defaultRoute);

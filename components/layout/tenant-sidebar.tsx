@@ -186,14 +186,14 @@ export function TenantSidebar({
     hasAnyPermission([PERMISSIONS.PORTAL_STAFF, PERMISSIONS.PORTAL_ADMIN])
   ) {
     navigation = tenantNavigation;
-  } else if (user?.isSystem) {
+  } else if (hasPermission(PERMISSIONS.APP_MANAGE)) {
     navigation = superAdminNavigation;
   } else {
     navigation = [];
   }
 
   const access: AccessControl = {
-    isSuperAdmin: user?.isSystem ?? false,
+    isSuperAdmin: user?.system ?? false,
     hasPermission,
     hasAnyPermission,
   };
@@ -224,7 +224,7 @@ export function TenantSidebar({
         </div>
         {!isCollapsed && (
           <span className="font-semibold text-sm truncate">
-            {user?.isSystem ? "Super Admin" : user?.tenantUsers[0].tenant.name}
+            {user?.system ? "Super Admin" : user?.tenantUsers[0].tenant.name}
           </span>
         )}
       </div>

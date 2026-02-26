@@ -22,9 +22,7 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   isLoading?: boolean;
-  pageSize?: number;
   emptyMessage?: string;
-  pageCount?: number;
 }
 
 export function DataTable<TData, TValue>({

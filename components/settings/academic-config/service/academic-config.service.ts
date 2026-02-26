@@ -10,9 +10,29 @@ import { AcademicConfig } from "../../types";
 import { queryKeys } from "@/app/constants/queryKeys";
 import { AxiosResponse } from "axios";
 import { Session, Term } from "@/types";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-export const useUpdateAcademicConfig = () => {
+const academicConfigSchema = z.object({
+  currentSessionId: z.string().min(1, "Session is required"),
+  currentTermId: z.string().min(1, "Term is required"),
+  autoPromoteStudents: z.boolean(),
+  lockPastResults: z.boolean(),
+});
+
+export const useUpdateAcademicConfig = (data?: AcademicConfig) => {
   const queryClient = useQueryClient();
+
+  const form = useForm<z.infer<typeof academicConfigSchema>>({
+    defaultValues: {
+      currentSessionId: data?.currentSessionId || "",
+      currentTermId: data?.currentTermId || "",
+      autoPromoteStudents: data?.autoPromoteStudents ?? false,
+      lockPastResults: data?.lockPastResults ?? true,
+    },
+    resolver: zodResolver(academicConfigSchema),
+  });
 
   const session = useQuery<AxiosResponse<Pick<Session, "id" | "name">[]>>({
     queryKey: [queryKeys.SESSION],
@@ -39,16 +59,28 @@ export const useUpdateAcademicConfig = () => {
       });
     },
     onError: (error: any) => {
+      if (error.response?.data?.errors) {
+        Object.entries(error.response.data.errors).forEach(([key, value]) => {
+          form.setError(key as keyof AcademicConfig, {
+            message: value as string,
+          });
+        });
+      }
       toast.error("Error", {
         description: error.response?.data?.message || error.message,
       });
     },
   });
 
+  const handleSave = async (values: z.infer<typeof academicConfigSchema>) => {
+    await response.mutateAsync(values);
+  };
+
   return {
-    updateConfig: response.mutateAsync,
+    updateConfig: handleSave,
     ...response,
     sessions: session.data?.data || [],
     terms: term.data?.data || [],
+    form,
   };
 };

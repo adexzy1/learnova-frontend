@@ -52,18 +52,17 @@ export function useClassArm(classLevelId: string) {
     }
   };
 
-  const session = useQuery<AxiosResponse<Pick<Session, "id" | "name">[]>>({
-    queryKey: [queryKeys.SESSION],
-    queryFn: async () =>
-      await axiosClient.get(SESSION_ENDPOINTS.GET_SELECTABLE_SESSIONS),
-  });
+  // const session = useQuery<AxiosResponse<Pick<Session, "id" | "name">[]>>({
+  //   queryKey: [queryKeys.SESSION],
+  //   queryFn: async () =>
+  //     await axiosClient.get(SESSION_ENDPOINTS.GET_SELECTABLE_SESSIONS),
+  // });
 
   const form = useForm<ClassArmFormData>({
     resolver: zodResolver(classArmSchema),
     defaultValues: {
       classId: classLevelId,
       name: "",
-      session: "",
     },
   });
 
@@ -106,7 +105,6 @@ export function useClassArm(classLevelId: string) {
     isDeleting: deleteArmMutation.isPending,
     armDialogOpen,
     setArmDialogOpen,
-    session,
     form,
     createArmMutation,
     handleOpenChange,
