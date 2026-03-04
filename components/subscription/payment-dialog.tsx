@@ -18,17 +18,7 @@ import {
   useVerifyPayment,
 } from "./service/subscription.service";
 import type { SubscriptionPlan, PaystackPaymentResponse } from "@/types";
-
-// Extend the global window to include PaystackPop
-declare global {
-  interface Window {
-    PaystackPop?: {
-      setup: (config: Record<string, unknown>) => {
-        openIframe: () => void;
-      };
-    };
-  }
-}
+import Paystack from "@paystack/inline-js";
 
 interface PaymentDialogProps {
   open: boolean;
@@ -51,18 +41,6 @@ export function PaymentDialog({
   const [errorMessage, setErrorMessage] = useState("");
   const initPayment = useInitializePayment();
   const verifyPayment = useVerifyPayment();
-
-  // Load Paystack script
-  useEffect(() => {
-    if (!open) return;
-    if (document.getElementById("paystack-script")) return;
-
-    const script = document.createElement("script");
-    script.id = "paystack-script";
-    script.src = "https://js.paystack.co/v1/inline.js";
-    script.async = true;
-    document.body.appendChild(script);
-  }, [open]);
 
   // Reset on close
   useEffect(() => {
@@ -102,35 +80,24 @@ export function PaymentDialog({
     try {
       const paymentData = await initPayment.mutateAsync({
         planId: plan.id,
-        interval: plan.interval,
-        email,
-        amount: plan.price,
       });
+      const paystack = new Paystack();
 
-      // Check if PaystackPop is available
-      if (!window.PaystackPop) {
-        // Paystack script not loaded — simulate success for dev/mock mode
-        setTimeout(() => {
-          handlePaystackCallback({
-            reference: paymentData.reference,
-            status: "success",
-            trans: "mock_trans",
-            transaction: "mock_transaction",
-            message: "Approved",
-          });
-        }, 1500);
-        return;
-      }
-
-      const handler = window.PaystackPop.setup({
-        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-        access_code: paymentData.access_code,
-        callback: (response: PaystackPaymentResponse) => {
+      paystack.resumeTransaction(paymentData.access_code, {
+        onSuccess: (response: PaystackPaymentResponse) => {
+          console.log("Success:", response);
           handlePaystackCallback(response);
         },
-        onClose: handlePaystackClose,
+        onCancel: () => {
+          handlePaystackClose();
+          console.log("Transaction cancelled");
+        },
+        onError: (error: any) => {
+          console.log("Error:", error);
+          setStep("error");
+          setErrorMessage("Failed to initialize payment. Please try again.");
+        },
       });
-      handler.openIframe();
     } catch {
       setStep("error");
       setErrorMessage("Failed to initialize payment. Please try again.");
@@ -142,11 +109,26 @@ export function PaymentDialog({
     onSuccess();
   };
 
+  const handleClose = () => {
+    if (step === "processing") return;
+    onOpenChange(false);
+  };
+
   if (!plan) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog
+      open={open}
+      onOpenChange={handleClose}
+      modal={step !== "processing"}
+    >
+      <DialogContent
+        onInteractOutside={(e) => {
+          if (step === "processing") {
+            e.preventDefault();
+          }
+        }}
+      >
         {step === "summary" && (
           <>
             <DialogHeader>

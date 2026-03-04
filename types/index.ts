@@ -30,6 +30,7 @@ export interface Tenant {
   accountNumber: string;
   email: string;
   phone: string;
+  onboardingStep?: number;
 }
 
 export interface Plan {
@@ -42,7 +43,7 @@ export interface SubscriptionPlan {
   id: string;
   name: string;
   price: number;
-  interval: "monthly" | "termly" | "yearly";
+  interval: "monthly" | "term" | "yearly";
   description: string;
   features: string[];
   maxStudents: number;
@@ -124,8 +125,8 @@ export interface User {
   role: string;
   permissions: string[];
   tenantId?: string;
-  system: boolean;
-  active: boolean;
+  isSystem: boolean;
+  isActive: boolean;
   tenantUsers: Array<{
     role: string;
     tenant: {
@@ -515,3 +516,13 @@ export interface TableFilters {
   sortOrder?: "asc" | "desc";
   [key: string]: unknown;
 }
+
+export type NextAction =
+  | "CHANGE_PASSWORD"
+  | "COMPLETE_ONBOARDING"
+  | "RESOLVE_SUBSCRIPTION"
+  | "UPDATE_COMPANY_PROFILE"
+  | "ADD_SESSION"
+  | "ADD_TERM"
+  | "ADD_CREDIT_CARD"
+  | "NONE";

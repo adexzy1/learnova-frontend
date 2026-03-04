@@ -1,25 +1,43 @@
 "use client";
 
 import { useState } from "react";
-import type { User } from "@/types";
-import { TenantAuthProvider } from "@/providers/tenant-auth-provider";
-import { TenantSidebar } from "@/components/layout/tenant-sidebar";
+import type { NextAction, User } from "@/types";
+import { AppAuthProvider } from "@/providers/app-auth-provider";
+import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Topbar } from "@/components/layout/topbar";
 
-interface TenantShellProps {
+interface AppShellProps {
   user: User | null;
   permissions?: string[];
+  personas?: string[];
+  activePersona?: string;
+  nextAction?: NextAction;
   children: React.ReactNode;
 }
 
-export function TenantShell({ user, permissions, children }: TenantShellProps) {
+export function AppShell({
+  user,
+  permissions,
+  personas,
+  activePersona,
+  nextAction,
+  children,
+}: AppShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const resolvedPermissions = permissions ?? user?.permissions ?? [];
 
   return (
-    <TenantAuthProvider value={{ user, permissions: resolvedPermissions }}>
+    <AppAuthProvider
+      value={{
+        user,
+        permissions: resolvedPermissions,
+        personas,
+        activePersona,
+        nextAction,
+      }}
+    >
       <div className="flex h-screen overflow-hidden">
-        <TenantSidebar isCollapsed={sidebarCollapsed} />
+        <AppSidebar isCollapsed={sidebarCollapsed} />
         <div className="flex-1 flex flex-col overflow-hidden">
           <Topbar
             onToggleSidebar={() => setSidebarCollapsed((prev) => !prev)}
@@ -29,6 +47,6 @@ export function TenantShell({ user, permissions, children }: TenantShellProps) {
           </main>
         </div>
       </div>
-    </TenantAuthProvider>
+    </AppAuthProvider>
   );
 }

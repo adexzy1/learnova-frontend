@@ -108,19 +108,10 @@ export const useChangePlan = () => {
 export const useInitializePayment = () => {
   return useMutation<PaymentInitResponse, Error, PaymentInitRequest>({
     mutationFn: async (data) => {
-      if (USE_MOCK) {
-        await delay(500);
-        return {
-          authorization_url: "",
-          access_code: "ACK_mock_test",
-          reference: `PSK_ref_${Date.now()}`,
-        };
-      }
-      const resp = await axiosClient.post(
-        SUBSCRIPTION_ENDPOINTS.INIT_PAYMENT,
-        data,
-      );
-      return resp.data;
+      const resp = await axiosClient.post(SUBSCRIPTION_ENDPOINTS.INIT_PAYMENT, {
+        planId: data.planId,
+      });
+      return resp.data.data;
     },
   });
 };

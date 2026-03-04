@@ -16,7 +16,6 @@ export const metadata: Metadata = {
   description:
     "Multi-tenant School Management System for educational institutions",
   keywords: ["school", "management", "education", "students", "teachers"],
-  // generator: "v0.app",
 };
 
 export const viewport: Viewport = {

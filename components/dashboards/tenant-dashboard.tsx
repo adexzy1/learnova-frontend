@@ -31,7 +31,7 @@ import { formatCurrency, formatNumber } from "@/lib/format";
 import { DashboardCharts } from "@/features/dashboard/dashboard-charts";
 import { RecentActivity } from "@/features/dashboard/recent-activity";
 import { QuickActions } from "@/features/dashboard/quick-actions";
-import { useAuth } from "@/providers/tenant-auth-provider";
+import { useAuth } from "@/providers/app-auth-provider";
 
 function StatCard({
   title,
@@ -99,7 +99,7 @@ function StatCard({
   );
 }
 
-export default function DashboardPage() {
+export default function TenantDashboard() {
   const { user } = useAuth();
   console.log(user);
   // const { user } = useAuth()
@@ -159,7 +159,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      {/* <QuickActions /> */}
+      <QuickActions />
 
       {/* Charts and Activity */}
       <div className="grid gap-6 lg:grid-cols-7">

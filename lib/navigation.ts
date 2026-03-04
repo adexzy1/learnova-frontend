@@ -245,7 +245,7 @@ export const parentNavigation: NavSection[] = [
     items: [
       {
         title: "Dashboard",
-        href: "/parent",
+        href: "/dashboard",
         icon: LayoutDashboard,
         permission: PERMISSIONS.PORTAL_GUARDIAN,
       },
@@ -305,7 +305,7 @@ export const studentNavigation: NavSection[] = [
     items: [
       {
         title: "Dashboard",
-        href: "/student",
+        href: "/dashboard",
         icon: LayoutDashboard,
         permission: PERMISSIONS.PORTAL_STUDENT,
       },
@@ -343,7 +343,7 @@ export const superAdminNavigation: NavSection[] = [
     items: [
       {
         title: "Dashboard",
-        href: "/super-admin",
+        href: "/dashboard",
         icon: LayoutDashboard,
         permission: PERMISSIONS.APP_MANAGE,
       },

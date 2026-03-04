@@ -9,9 +9,6 @@ export interface PlanChangeRequest {
 
 export interface PaymentInitRequest {
   planId: string;
-  interval: SubscriptionPlan["interval"];
-  email: string;
-  amount: number;
 }
 
 export interface PaymentInitResponse {
@@ -27,10 +24,10 @@ export interface PaymentVerifyRequest {
 // Mock data for development
 export const MOCK_PLANS: SubscriptionPlan[] = [
   {
-    id: "plan_basic",
-    name: "Starter",
-    price: 15000,
-    interval: "termly",
+    id: "bb7a8ada-1bcb-41e0-9494-a1c0db26fa41",
+    name: "Essential",
+    price: 20000,
+    interval: "term",
     description: "Perfect for small schools just getting started",
     features: [
       "Up to 100 students",
@@ -44,10 +41,10 @@ export const MOCK_PLANS: SubscriptionPlan[] = [
     maxStorage: 5,
   },
   {
-    id: "plan_standard",
-    name: "Standard",
-    price: 35000,
-    interval: "termly",
+    id: "7dc71341-688e-4507-b568-fc98e24b11be",
+    name: "Professional",
+    price: 50000,
+    interval: "term",
     description: "Ideal for growing schools with more needs",
     features: [
       "Up to 500 students",
@@ -65,9 +62,9 @@ export const MOCK_PLANS: SubscriptionPlan[] = [
   },
   {
     id: "plan_premium",
-    name: "Premium",
-    price: 75000,
-    interval: "termly",
+    name: "Enterprise",
+    price: 0,
+    interval: "term",
     description: "For large institutions that need everything",
     features: [
       "Unlimited students",

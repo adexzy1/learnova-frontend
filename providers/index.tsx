@@ -5,6 +5,7 @@ import React from "react";
 import { TenantProvider } from "./tenant-provider";
 import { QueryProvider } from "./query-provider";
 import { Toaster } from "sonner";
+import { AppAuthProvider } from "./app-auth-provider";
 
 interface ProvidersProps {
   children: React.ReactNode;

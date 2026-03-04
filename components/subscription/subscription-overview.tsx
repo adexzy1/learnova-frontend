@@ -171,7 +171,7 @@ export function SubscriptionOverview({
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       {/* Main subscription card */}
-      <Card className="lg:col-span-2 overflow-hidden">
+      <Card className="overflow-hidden">
         <div className="h-1 w-full bg-linear-to-r from-primary via-primary/80 to-primary/40" />
         <CardHeader>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -290,7 +290,7 @@ export function SubscriptionOverview({
       </Card>
 
       {/* Usage card */}
-      <Card className="lg:col-span-2">
+      <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -302,7 +302,7 @@ export function SubscriptionOverview({
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="grid gap-6">
             <UsageMeter
               label="Students"
               icon={<Users className="h-4 w-4" />}

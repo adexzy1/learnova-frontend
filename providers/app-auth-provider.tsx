@@ -1,31 +1,40 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo } from "react";
-import type { User } from "@/types";
+import type { NextAction, User } from "@/types";
 
 export interface AuthValue {
   user: User | null;
   permissions: string[];
+  personas?: string[];
+  activePersona?: string;
+  nextAction?: NextAction;
+  onboardingStep?: string;
   hasPermission: (permission: string) => boolean;
   hasAnyPermission: (permissions: string[]) => boolean;
   hasAllPermissions: (permissions: string[]) => boolean;
 }
 
-type TenantAuthInput = {
+type AppAuthInput = {
   user: User | null;
   permissions?: string[];
+  personas?: string[];
+  activePersona?: string;
+  nextAction?: NextAction;
+  onboardingStep?: string;
 };
 
 const AuthContext = createContext<AuthValue | null>(null);
 
-export function TenantAuthProvider({
+export function AppAuthProvider({
   value,
   children,
 }: {
-  value: TenantAuthInput;
+  value: AppAuthInput;
   children: React.ReactNode;
 }) {
-  const resolvedPermissions = value.permissions ?? value.user?.permissions ?? [];
+  const resolvedPermissions =
+    value.permissions ?? value.user?.permissions ?? [];
 
   const hasPermission = useCallback(
     (permission: string) => resolvedPermissions.includes(permission),
@@ -34,13 +43,17 @@ export function TenantAuthProvider({
 
   const hasAnyPermission = useCallback(
     (permissions: string[]) =>
-      permissions.some((permission) => resolvedPermissions.includes(permission)),
+      permissions.some((permission) =>
+        resolvedPermissions.includes(permission),
+      ),
     [resolvedPermissions],
   );
 
   const hasAllPermissions = useCallback(
     (permissions: string[]) =>
-      permissions.every((permission) => resolvedPermissions.includes(permission)),
+      permissions.every((permission) =>
+        resolvedPermissions.includes(permission),
+      ),
     [resolvedPermissions],
   );
 
@@ -48,6 +61,9 @@ export function TenantAuthProvider({
     () => ({
       user: value.user,
       permissions: resolvedPermissions,
+      personas: value.personas,
+      activePersona: value.activePersona,
+      nextAction: value.nextAction,
       hasPermission,
       hasAnyPermission,
       hasAllPermissions,
@@ -55,6 +71,9 @@ export function TenantAuthProvider({
     [
       value.user,
       resolvedPermissions,
+      value.personas,
+      value.activePersona,
+      value.nextAction,
       hasPermission,
       hasAnyPermission,
       hasAllPermissions,
@@ -67,7 +86,7 @@ export function TenantAuthProvider({
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) {
-    throw new Error("useAuth must be used inside tenant layout");
+    throw new Error("useAuth must be used inside app layout");
   }
   return ctx;
 }

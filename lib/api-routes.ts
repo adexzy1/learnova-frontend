@@ -79,7 +79,15 @@ export const SUBSCRIPTION_ENDPOINTS = {
   GET_SUBSCRIPTION: "/subscription",
   GET_PLANS: "/subscription/plan",
   CHANGE_PLAN: "/subscription/change-plan",
-  INIT_PAYMENT: "/subscription/payment/initialize",
+  INIT_PAYMENT: "/subscription/initialize-payment",
   VERIFY_PAYMENT: "/subscription/payment/verify",
   GET_BILLING_HISTORY: "/subscription/billing",
+};
+
+export const ONBOARDING_ENDPOINTS = {
+  CHANGE_DEFAULT_PASSWORD: "/auth/onboarding/change-default-password",
+  UPDATE_COMPANY_PROFILE: "/auth/onboarding/update-company-profile",
+  ADD_SESSION: "/auth/onboarding/add-session",
+  ADD_TERM: "/auth/onboarding/add-term",
+  ADD_CREDIT_CARD: "/auth/onboarding/add-credit-card",
 };

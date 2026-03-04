@@ -12,7 +12,7 @@ import {
   useSubscriptionPlans,
   useBillingHistory,
 } from "@/components/subscription/service/subscription.service";
-import { useAuth } from "@/providers/tenant-auth-provider";
+import { useAuth } from "@/providers/app-auth-provider";
 import type { SubscriptionPlan } from "@/types";
 
 export default function SubscriptionPage() {

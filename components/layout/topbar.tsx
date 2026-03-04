@@ -32,7 +32,7 @@ import { useTenant } from "@/providers/tenant-provider";
 // import { useAuth } from "@/providers/auth-provider";
 import { useOffline } from "@/hooks/use-offline";
 import { MobileNav } from "./mobile-nav";
-import { useAuth } from "@/providers/tenant-auth-provider";
+import { useAuth } from "@/providers/app-auth-provider";
 
 interface TopbarProps {
   onToggleSidebar?: () => void;
@@ -86,7 +86,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
           <GraduationCap className="h-4 w-4" />
         </div>
         <span className="font-semibold text-sm truncate max-w-[150px]">
-          {user?.system ? "Super Admin" : user?.tenantUsers[0].tenant.name}
+          {user?.isSystem ? "Super Admin" : user?.tenantUsers[0].tenant.name}
         </span>
       </div>
 

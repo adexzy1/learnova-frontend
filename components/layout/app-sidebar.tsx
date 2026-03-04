@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/collapsible";
 
 import { useTenant } from "@/providers/tenant-provider";
-import { useAuth } from "@/providers/tenant-auth-provider";
+import { useAuth } from "@/providers/app-auth-provider";
 import {
   tenantNavigation,
   parentNavigation,
@@ -32,6 +32,7 @@ type AccessControl = {
   hasAnyPermission: (permissions: string[]) => boolean;
 };
 
+// ... existing code ...
 function canAccessItem(item: NavItem, access: AccessControl) {
   if (access.isSuperAdmin) return true;
   if (!item.permission) return true;
@@ -159,26 +160,34 @@ function NavSectionComponent({
   );
 }
 
-interface TenantSidebarProps {
+interface AppSidebarProps {
   isCollapsed?: boolean;
   navigation?: NavSection[];
   tenantName?: string;
   userName?: string;
 }
 
-export function TenantSidebar({
+export function AppSidebar({
   isCollapsed = false,
   navigation: propNavigation,
   tenantName: propTenantName,
   userName: propUserName,
-}: TenantSidebarProps) {
+}: AppSidebarProps) {
   const { tenant } = useTenant();
-  const { user, hasPermission, hasAnyPermission } = useAuth();
+  const { user, hasPermission, hasAnyPermission, activePersona } = useAuth();
 
   // Determine which navigation to use
   let navigation: NavSection[];
 
-  if (hasPermission(PERMISSIONS.PORTAL_GUARDIAN)) {
+  if (activePersona === "SYSTEM") {
+    navigation = superAdminNavigation;
+  } else if (activePersona === "GUARDIAN") {
+    navigation = parentNavigation;
+  } else if (activePersona === "STUDENT") {
+    navigation = studentNavigation;
+  } else if (activePersona === "ADMIN" || activePersona === "STAFF") {
+    navigation = tenantNavigation;
+  } else if (hasPermission(PERMISSIONS.PORTAL_GUARDIAN)) {
     navigation = parentNavigation;
   } else if (hasPermission(PERMISSIONS.PORTAL_STUDENT)) {
     navigation = studentNavigation;
@@ -193,7 +202,7 @@ export function TenantSidebar({
   }
 
   const access: AccessControl = {
-    isSuperAdmin: user?.system ?? false,
+    isSuperAdmin: user?.isSystem ?? false,
     hasPermission,
     hasAnyPermission,
   };
@@ -224,7 +233,7 @@ export function TenantSidebar({
         </div>
         {!isCollapsed && (
           <span className="font-semibold text-sm truncate">
-            {user?.system ? "Super Admin" : user?.tenantUsers[0].tenant.name}
+            {user?.isSystem ? "Super Admin" : user?.tenantUsers[0].tenant.name}
           </span>
         )}
       </div>

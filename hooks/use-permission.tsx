@@ -2,7 +2,7 @@
 
 import React from "react";
 
-import { useAuth } from "@/providers/tenant-auth-provider";
+import { useAuth } from "@/providers/app-auth-provider";
 import { PERMISSIONS } from "@/app/constants/permissions";
 
 /**
