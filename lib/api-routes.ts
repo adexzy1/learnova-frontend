@@ -85,9 +85,10 @@ export const SUBSCRIPTION_ENDPOINTS = {
 };
 
 export const ONBOARDING_ENDPOINTS = {
-  CHANGE_DEFAULT_PASSWORD: "/auth/onboarding/change-default-password",
-  UPDATE_COMPANY_PROFILE: "/auth/onboarding/update-company-profile",
-  ADD_SESSION: "/auth/onboarding/add-session",
-  ADD_TERM: "/auth/onboarding/add-term",
-  ADD_CREDIT_CARD: "/auth/onboarding/add-credit-card",
+  CHANGE_DEFAULT_PASSWORD: "/onboarding/change-default-password",
+  UPDATE_SCHOOL_PROFILE: "/onboarding/update-school-profile",
+  SET_ACADEMIC_YEAR: "/onboarding/setup-academic-year",
+  ADD_CLASS_STRUCTURE: "/onboarding/setup-class-structure",
+  SET_GRADING_SYSTEM: "/onboarding/setup-grading-system",
+  ADD_CREDIT_CARD: "/onboarding/add-credit-card",
 };

@@ -45,12 +45,8 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const res = await axiosClient.post("/auth/login", data);
-      console.log(res);
       toast.success("Welcome back!");
       router.push("/dashboard");
-      // if (res.data.defaultRoute) {
-      //   router.push(res.data.defaultRoute);
-      // }
     } catch (error: any) {
       form.setError("root", {
         message: error.response.data.message,

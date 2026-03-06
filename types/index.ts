@@ -524,5 +524,7 @@ export type NextAction =
   | "UPDATE_COMPANY_PROFILE"
   | "ADD_SESSION"
   | "ADD_TERM"
+  | "ADD_CLASS_STRUCTURE"
+  | "SET_GRADING_SYSTEM"
   | "ADD_CREDIT_CARD"
   | "NONE";

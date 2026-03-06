@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
 
-const schoolSettingsSchema = z.object({
+export const schoolSettingsSchema = z.object({
   schoolName: z.string().min(2, "School name is required"),
   email: z.string().email("Invalid email"),
   phone: z.string().min(10, "Phone number is required"),
