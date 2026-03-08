@@ -1,7 +1,15 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 import type { NextAction, User } from "@/types";
+import axiosClient from "@/lib/axios-client";
+import { AUTH_ENDPOINTS } from "@/lib/api-routes";
 
 export interface AuthValue {
   user: User | null;
@@ -10,6 +18,8 @@ export interface AuthValue {
   activePersona?: string;
   nextAction?: NextAction;
   onboardingStep?: string;
+  isSwitchingPersona: boolean;
+  switchPersona: (persona: string) => Promise<void>;
   hasPermission: (permission: string) => boolean;
   hasAnyPermission: (permissions: string[]) => boolean;
   hasAllPermissions: (permissions: string[]) => boolean;
@@ -35,6 +45,21 @@ export function AppAuthProvider({
 }) {
   const resolvedPermissions =
     value.permissions ?? value.user?.permissions ?? [];
+
+  const [isSwitchingPersona, setIsSwitchingPersona] = useState(false);
+
+  const switchPersona = useCallback(async (persona: string) => {
+    setIsSwitchingPersona(true);
+    try {
+      await axiosClient.post(AUTH_ENDPOINTS.SWITCH_PERSONA, { persona });
+      // Full page reload so the server-side layout refetches session
+      // with the new persona's cookies already set by the API response
+      window.location.reload();
+    } catch (error) {
+      setIsSwitchingPersona(false);
+      throw error;
+    }
+  }, []);
 
   const hasPermission = useCallback(
     (permission: string) => resolvedPermissions.includes(permission),
@@ -65,6 +90,8 @@ export function AppAuthProvider({
       activePersona: value.activePersona,
       nextAction: value.nextAction,
       onboardingStep: value.onboardingStep,
+      isSwitchingPersona,
+      switchPersona,
       hasPermission,
       hasAnyPermission,
       hasAllPermissions,
@@ -76,6 +103,8 @@ export function AppAuthProvider({
       value.activePersona,
       value.nextAction,
       value.onboardingStep,
+      isSwitchingPersona,
+      switchPersona,
       hasPermission,
       hasAnyPermission,
       hasAllPermissions,

@@ -93,3 +93,11 @@ export const ONBOARDING_ENDPOINTS = {
   SET_PAYMENT_METHOD: "/onboarding/payment-method",
   VERIFY_PAYMENT: "/onboarding/verify-payment",
 };
+
+export const AUTH_ENDPOINTS = {
+  LOGIN: "/auth/login",
+  LOGOUT: "/auth/logout",
+  SESSION: "/auth/session",
+  REFRESH: "/auth/refresh",
+  SWITCH_PERSONA: "/auth/switch-persona",
+};
