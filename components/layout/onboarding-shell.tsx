@@ -10,6 +10,7 @@ import {
   GraduationCap,
   CreditCard,
   Check,
+  PartyPopper,
 } from "lucide-react";
 
 interface OnboardingShellProps {
@@ -48,10 +49,16 @@ const ONBOARDING_STEPS = [
     icon: GraduationCap,
   },
   {
-    key: "payment",
+    key: "paymentMethod",
     label: "Subscription",
     description: "Verify your billing details",
     icon: CreditCard,
+  },
+  {
+    key: "complete",
+    label: "Complete",
+    description: "You're all set!",
+    icon: PartyPopper,
   },
 ];
 
@@ -60,7 +67,8 @@ const STEP_ORDER: Record<string, number> = {
   session: 2,
   classStructure: 3,
   gradingSystem: 4,
-  payment: 5,
+  paymentMethod: 5,
+  complete: 6,
 };
 
 export function OnboardingShell({

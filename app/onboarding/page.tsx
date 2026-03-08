@@ -7,6 +7,7 @@ import AcademicSession from "./_components/academic-session";
 import ClassStructure from "./_components/class-structure";
 import GradingSystem from "./_components/grading-system";
 import Payment from "./_components/payment";
+import Complete from "./_components/onboarding-complete";
 
 // ─── Step map ───────────────────────────────────────────────────────
 
@@ -16,6 +17,7 @@ const STEP_MAP: Record<string, number> = {
   classStructure: 3,
   gradingSystem: 4,
   paymentMethod: 5,
+  complete: 6,
 };
 
 // ─── Step Header Component ──────────────────────────────────────────
@@ -83,7 +85,8 @@ export default function OnboardingPage() {
       {step === 2 && <AcademicSession goBack={goBack} setStep={setStep} />}
       {step === 3 && <ClassStructure goBack={goBack} setStep={setStep} />}
       {step === 4 && <GradingSystem goBack={goBack} setStep={setStep} />}
-      {step === 5 && <Payment goBack={goBack} />}
+      {step === 5 && <Payment goBack={goBack} setStep={setStep} />}
+      {step === 6 && <Complete />}
     </div>
   );
 }

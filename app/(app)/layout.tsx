@@ -13,12 +13,10 @@ export default async function AppLayout({
     redirect("/");
   }
 
+  console.log(session);
+
   switch (session.nextAction) {
     case "COMPLETE_ONBOARDING":
-    case "UPDATE_COMPANY_PROFILE":
-    case "ADD_SESSION":
-    case "ADD_TERM":
-    case "ADD_CREDIT_CARD":
       redirect("/onboarding");
     case "CHANGE_PASSWORD":
       redirect("/onboarding/change-password");

@@ -8,9 +8,10 @@ import { StepHeader } from "../page";
 
 interface PaymentProps {
   goBack: () => void;
+  setStep: (step: number) => void;
 }
 
-const Payment = ({ goBack }: PaymentProps) => {
+const Payment = ({ goBack, setStep }: PaymentProps) => {
   const {
     initiatePayment,
     verifyPayment,
@@ -25,10 +26,10 @@ const Payment = ({ goBack }: PaymentProps) => {
       const PaystackConstructor = PaystackModule.default as any;
       const paystack = new PaystackConstructor();
 
-      paystack.resumeTransaction(paymentData.access_code, {
+      paystack.resumeTransaction(paymentData.data.access_code, {
         onSuccess: async (response: PaystackPaymentResponse) => {
           await verifyPayment(response.reference);
-          window.location.href = "/dashboard";
+          setStep(6);
         },
         onCancel: () => {},
         onError: () => {},

@@ -90,5 +90,6 @@ export const ONBOARDING_ENDPOINTS = {
   SET_ACADEMIC_YEAR: "/onboarding/setup-academic-year",
   ADD_CLASS_STRUCTURE: "/onboarding/setup-class-structure",
   SET_GRADING_SYSTEM: "/onboarding/setup-grading-system",
-  ADD_CREDIT_CARD: "/onboarding/add-credit-card",
+  SET_PAYMENT_METHOD: "/onboarding/payment-method",
+  VERIFY_PAYMENT: "/onboarding/verify-payment",
 };

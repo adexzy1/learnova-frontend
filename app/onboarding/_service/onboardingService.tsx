@@ -233,8 +233,9 @@ export const useOnboardingPayment = () => {
   const initMutation = useMutation({
     mutationFn: async () => {
       const response = await axiosClient.post(
-        ONBOARDING_ENDPOINTS.ADD_CREDIT_CARD,
+        ONBOARDING_ENDPOINTS.SET_PAYMENT_METHOD,
       );
+      console.log(response.data);
       return response.data;
     },
   });
@@ -242,9 +243,10 @@ export const useOnboardingPayment = () => {
   const verifyMutation = useMutation({
     mutationFn: async (reference: string) => {
       const response = await axiosClient.post(
-        ONBOARDING_ENDPOINTS.ADD_CREDIT_CARD + "/verify",
+        ONBOARDING_ENDPOINTS.VERIFY_PAYMENT,
         { reference },
       );
+
       return response.data;
     },
     onSuccess: (res: any) => {
