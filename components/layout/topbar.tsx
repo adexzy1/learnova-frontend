@@ -148,7 +148,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
             <GraduationCap className="h-4 w-4" />
           </div>
           <span className="font-semibold text-sm truncate max-w-[150px]">
-            {user?.isSystem ? "Super Admin" : user?.tenantUsers[0].tenant.name}
+            {user?.isSystem ? "Super Admin" : user?.activePersona}
           </span>
         </div>
 

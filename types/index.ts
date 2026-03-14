@@ -127,13 +127,8 @@ export interface User {
   tenantId?: string;
   isSystem: boolean;
   isActive: boolean;
-  tenantUsers: Array<{
-    role: string;
-    tenant: {
-      id: number;
-      name: string;
-    };
-  }>;
+  activePersona: string;
+  personas: string[];
 }
 
 export interface AuthState {

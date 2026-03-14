@@ -4,6 +4,7 @@ export const ROLES_ENDPOINTS = {
   CREATE_ROLE: "/roles",
   UPDATE_ROLE: "/roles/:id",
   DELETE_ROLE: "/roles/:id",
+  GET_SELECTABLE_ROLES: "/roles/select",
 };
 export const TENANT_SETTINGS_ENDPOINTS = {
   GET_TENANT_SETTINGS: "/settings",
@@ -57,6 +58,14 @@ export const STUDENT_ENDPOINTS = {
   CREATE_STUDENT: "/people/students",
   UPDATE_STUDENT: "/people/students/:id",
   DELETE_STUDENT: "/people/students/:id",
+};
+
+export const STAFF_ENDPOINTS = {
+  GET_ALL_STAFF: "/people/staff",
+  GET_STAFF_BY_ID: "/people/staff/:id",
+  CREATE_STAFF: "/people/staff",
+  UPDATE_STAFF: "/people/staff/:id",
+  DEACTIVATE_STAFF: "/people/staff/:id/deactivate",
 };
 
 export const TENANT_ENDPOINTS = {

@@ -195,7 +195,6 @@ export const staffSchema = z.object({
   email: z.string().email("Invalid email"),
   phone: z.string().min(10, "Phone number is required"),
   role: z.enum(["school-admin", "teacher", "finance-officer"]),
-  department: z.string().optional(),
   subjects: z.array(z.string()).optional(),
   classes: z.array(z.string()).optional(),
 });

@@ -64,7 +64,7 @@ export function ClassCard({ classLevel, onEdit }: ClassCardProps) {
           </DropdownMenu>
         </CardHeader>
         <CardContent>
-          {classLevel.classArms.length === 0 ? (
+          {classLevel.classArms?.length === 0 ? (
             <div className="text-center py-4">
               <p className="text-sm text-muted-foreground mb-2">No arms yet</p>
               <Button
@@ -79,7 +79,12 @@ export function ClassCard({ classLevel, onEdit }: ClassCardProps) {
           ) : (
             <div className="space-y-2">
               {classLevel.classArms.map((arm) => (
-                <ClassArmCard key={arm.id} arm={arm} classId={classLevel.id} />
+                <ClassArmCard
+                  key={arm.id}
+                  arm={arm}
+                  classId={classLevel.id}
+                  className={classLevel.name}
+                />
               ))}
             </div>
           )}

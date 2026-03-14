@@ -233,7 +233,7 @@ export function AppSidebar({
         </div>
         {!isCollapsed && (
           <span className="font-semibold text-sm truncate">
-            {user?.isSystem ? "Super Admin" : user?.tenantUsers[0].tenant.name}
+            {user?.isSystem ? "Super Admin" : user?.activePersona}
           </span>
         )}
       </div>

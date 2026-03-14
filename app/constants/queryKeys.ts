@@ -10,4 +10,6 @@ export const queryKeys = {
   SUBSCRIPTION: "subscription",
   SUBSCRIPTION_PLANS: "subscription-plans",
   BILLING_HISTORY: "billing-history",
+  STAFF: "staff",
+  ROLES: "roles",
 } as const;

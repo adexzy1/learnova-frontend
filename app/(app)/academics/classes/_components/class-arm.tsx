@@ -8,9 +8,10 @@ import { DeleteClassArmDialog } from "./delete-class-arm-dialog";
 interface ClassArmProps {
   arm: ClassArmType;
   classId: string;
+  className: string;
 }
 
-const ClassArm = ({ arm, classId }: ClassArmProps) => {
+const ClassArm = ({ arm, classId, className }: ClassArmProps) => {
   const {
     handleDeleteArm,
     deleteArmOpen,
@@ -27,7 +28,9 @@ const ClassArm = ({ arm, classId }: ClassArmProps) => {
         className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
       >
         <div className="flex items-center gap-2">
-          <Badge variant="outline">{arm.name}</Badge>
+          <Badge variant="outline">
+            {className} {arm.name}
+          </Badge>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
