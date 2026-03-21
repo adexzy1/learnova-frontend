@@ -7,6 +7,7 @@ import { DeleteSubjectDialog } from "./_components/delete-dialog";
 import { CreateSubjectDialog } from "./_components/create-dialog";
 import { EditSubjectDialog } from "./_components/edit-dialog";
 import { getColumns } from "./_components/columns";
+import { DataTablePagination } from "@/components/shared/table/pagination";
 
 export default function SubjectsPage() {
   const {
@@ -21,7 +22,7 @@ export default function SubjectsPage() {
     deleteMutation,
     handleEdit,
     handleDelete,
-    pageCount,
+    meta,
     pagination,
     setPagination,
     deleteDialogOpen,
@@ -71,12 +72,21 @@ export default function SubjectsPage() {
           columns={columns}
           data={subjects || []}
           isLoading={isLoading}
-          searchPlaceholder="Search subjects..."
-          searchColumn="name"
           emptyMessage="No subjects found. Add your first subject."
-          pageCount={pageCount}
-          pagination={pagination}
-          onPaginationChange={setPagination}
+        />
+
+        <DataTablePagination
+          page={pagination.page}
+          pageSize={pagination.per_page}
+          totalPages={meta?.lastPage || 0}
+          hasNextPage={meta?.hasNextPage || false}
+          hasPrevPage={meta?.hasPrevPage || false}
+          onPaginationChange={(pagination) =>
+            setPagination({
+              page: pagination.page,
+              per_page: pagination.pageSize,
+            })
+          }
         />
       </div>
 

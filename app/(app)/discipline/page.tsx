@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Plus, Filter, AlertTriangle, ShieldAlert, Gavel } from "lucide-react";
 import { format } from "date-fns";
 
@@ -42,13 +41,10 @@ import {
 } from "@/components/ui/select";
 
 import { PageHeader } from "@/components/shared/page-header";
-import { fetchDisciplineIncidents } from "@/lib/api";
+import useDisciplineService from "./_service/useDisciplineService";
 
 export default function DisciplinePage() {
-  const { data: incidents, isLoading } = useQuery({
-    queryKey: ["discipline"],
-    queryFn: () => fetchDisciplineIncidents(),
-  });
+  const { incidents, isLoading, createMutation } = useDisciplineService();
 
   // Mock colors for severity
   const getSeverityColor = (type: string) => {

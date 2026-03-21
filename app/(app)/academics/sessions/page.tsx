@@ -25,6 +25,7 @@ import axiosClient from "@/lib/axios-client";
 import { SESSION_ENDPOINTS } from "@/lib/api-routes";
 import { SessionFormDialog } from "./_components/session-form-dialog";
 import { DeleteSessionDialog } from "./_components/delete-session-dialog";
+import { DataTablePagination } from "@/components/shared/table/pagination";
 
 export default function SessionsPage() {
   const queryClient = useQueryClient();
@@ -34,9 +35,9 @@ export default function SessionsPage() {
   const [sessionToDelete, setSessionToDelete] = useState<Session | null>(null);
 
   // Pagination and Search State
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
+  const [pagination, setPagination] = useState({
+    page: 1,
+    per_page: 10,
   });
   const [search, setSearch] = useState("");
 
@@ -47,15 +48,15 @@ export default function SessionsPage() {
     queryFn: async () =>
       await axiosClient.get(SESSION_ENDPOINTS.GET_ALL_SESSIONS, {
         params: {
-          page: `${pagination.pageIndex + 1}`,
-          per_page: `${pagination.pageSize}`,
+          page: `${pagination.page}`,
+          limit: `${pagination.per_page}`,
           search: search || undefined,
         },
       }),
   });
 
-  const sessions = sessionsResponse?.data?.data || [];
-  const pageCount = sessionsResponse?.data?.meta.totalPages || 0;
+  const sessions = sessionsResponse?.data?.data?.data || [];
+  const meta = sessionsResponse?.data?.data?.meta;
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -183,14 +184,21 @@ export default function SessionsPage() {
         columns={columns}
         data={sessions}
         isLoading={isLoading}
-        searchPlaceholder="Search sessions..."
-        searchColumn="name"
         emptyMessage="No sessions found. Create your first academic session."
-        pageCount={pageCount}
-        pagination={pagination}
-        onPaginationChange={setPagination}
-        search={search}
-        onSearchChange={setSearch}
+      />
+
+      <DataTablePagination
+        page={pagination.page}
+        pageSize={pagination.per_page}
+        totalPages={meta?.lastPage || 0}
+        hasNextPage={meta?.hasNextPage || false}
+        hasPrevPage={meta?.hasPrevPage || false}
+        onPaginationChange={(pagination) =>
+          setPagination({
+            page: pagination.page,
+            per_page: pagination.pageSize,
+          })
+        }
       />
 
       <DeleteSessionDialog

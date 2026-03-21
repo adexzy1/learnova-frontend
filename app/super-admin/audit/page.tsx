@@ -1,15 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import type { AxiosResponse } from "axios";
 import {
-  Calendar,
   Search,
-  Filter,
   Download,
-  Shield,
   User,
-  Clock,
-  LayoutGrid,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -18,9 +15,6 @@ import { Input } from "@/components/ui/input";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
 import {
   Table,
@@ -38,64 +32,60 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { PageHeader } from "@/components/shared/page-header";
+import apiClient from "@/lib/api-client";
+import { AUDIT_ENDPOINTS } from "@/lib/api-routes";
+import { queryKeys } from "@/app/constants/queryKeys";
+import type { PaginatedResponse } from "@/types";
 
-// Mock Data
-const AUDIT_LOGS = [
-  {
-    id: "log-1",
-    action: "User Login",
-    user: "admin@school1.com",
-    role: "School Admin",
-    ip: "192.168.1.1",
-    timestamp: "2024-10-25T08:30:00",
-    status: "success",
-    details: "Successful login",
-  },
-  {
-    id: "log-2",
-    action: "Update Settings",
-    user: "admin@school1.com",
-    role: "School Admin",
-    ip: "192.168.1.1",
-    timestamp: "2024-10-25T09:15:00",
-    status: "success",
-    details: "Updated grading system",
-  },
-  {
-    id: "log-3",
-    action: "Delete Student",
-    user: "principal@school1.com",
-    role: "Super Admin",
-    ip: "10.0.0.5",
-    timestamp: "2024-10-25T10:00:00",
-    status: "warning",
-    details: "Deleted student ADM/2023/001",
-  },
-  {
-    id: "log-4",
-    action: "Failed Login",
-    user: "unknown@user.com",
-    role: "Guest",
-    ip: "45.2.1.9",
-    timestamp: "2024-10-25T11:45:00",
-    status: "error",
-    details: "Invalid password attempt",
-  },
-  {
-    id: "log-5",
-    action: "View Report",
-    user: "teacher@school1.com",
-    role: "Teacher",
-    ip: "192.168.1.20",
-    timestamp: "2024-10-25T13:20:00",
-    status: "success",
-    details: "Accessed term reports",
-  },
-];
+interface AuditLogEntry {
+  id: string;
+  action: string;
+  user: string;
+  role: string;
+  ip: string;
+  timestamp: string;
+  status: "success" | "warning" | "error";
+  details: string;
+}
 
 export default function AuditLogPage() {
+  const [page, setPage] = useState(1);
+
+  const { data: response, isLoading, error } = useQuery<
+    AxiosResponse<PaginatedResponse<AuditLogEntry>>
+  >({
+    queryKey: [queryKeys.AUDIT_LOGS, page],
+    queryFn: () =>
+      apiClient.get(AUDIT_ENDPOINTS.GET_ALL, { params: { page, per_page: 20 } }),
+  });
+
+  const logs = response?.data?.data ?? [];
+  const totalItems = response?.data?.total ?? 0;
+  const totalPages = response?.data?.totalPages ?? 1;
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Audit Logs"
+          description="Monitor system activity and security events"
+          breadcrumbs={[
+            { label: "Dashboard", href: "/super-admin" },
+            { label: "Audit Logs" },
+          ]}
+        />
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
+          <p className="text-sm text-muted-foreground">
+            Unable to load audit logs. The audit endpoint may be unavailable.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -106,24 +96,17 @@ export default function AuditLogPage() {
           { label: "Audit Logs" },
         ]}
         actions={
-          <div className="flex gap-2">
-            <Button variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              Export CSV
-            </Button>
-          </div>
+          <Button variant="outline">
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
         }
       />
 
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-card p-4 rounded-lg border">
-        <div className="flex gap-2 w-full sm:w-auto flex-1">
-          <div className="relative w-full sm:w-[300px]">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search logs..." className="pl-8" />
-          </div>
-          <Button variant="outline" size="icon">
-            <Calendar className="h-4 w-4" />
-          </Button>
+        <div className="relative w-full sm:w-[300px]">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Search logs..." className="pl-8" />
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           <Select defaultValue="all">
@@ -153,86 +136,100 @@ export default function AuditLogPage() {
 
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Timestamp</TableHead>
-                <TableHead>Action</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>IP Address</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Details</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {AUDIT_LOGS.map((log) => (
-                <TableRow key={log.id}>
-                  <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
-                    <div className="flex flex-col">
-                      <span>
-                        {format(new Date(log.timestamp), "MMM d, yyyy")}
-                      </span>
-                      <span>{format(new Date(log.timestamp), "HH:mm:ss")}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-medium">{log.action}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <User className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-xs">{log.user}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="text-xs font-normal">
-                      {log.role}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    {log.ip}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        log.status === "success"
-                          ? "secondary"
-                          : log.status === "warning"
-                            ? "secondary"
-                            : "destructive"
-                      }
-                      className={
-                        log.status === "success"
-                          ? "bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400"
-                          : log.status === "warning"
-                            ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400"
-                            : ""
-                      }
-                    >
-                      {log.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell
-                    className="text-muted-foreground text-xs max-w-[200px] truncate"
-                    title={log.details}
-                  >
-                    {log.details}
-                  </TableCell>
-                </TableRow>
+          {isLoading ? (
+            <div className="p-6 space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
               ))}
-            </TableBody>
-          </Table>
+            </div>
+          ) : logs.length === 0 ? (
+            <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+              No audit logs found.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Timestamp</TableHead>
+                  <TableHead>Action</TableHead>
+                  <TableHead>User</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>IP Address</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Details</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {logs.map((log) => (
+                  <TableRow key={log.id}>
+                    <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
+                      <div className="flex flex-col">
+                        <span>{format(new Date(log.timestamp), "MMM d, yyyy")}</span>
+                        <span>{format(new Date(log.timestamp), "HH:mm:ss")}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">{log.action}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <User className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-xs">{log.user}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs font-normal">
+                        {log.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {log.ip}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={log.status === "error" ? "destructive" : "secondary"}
+                        className={
+                          log.status === "success"
+                            ? "bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400"
+                            : log.status === "warning"
+                              ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400"
+                              : ""
+                        }
+                      >
+                        {log.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell
+                      className="text-muted-foreground text-xs max-w-[200px] truncate"
+                      title={log.details}
+                    >
+                      {log.details}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          Showing 1-5 of 1,248 logs
+          Showing {logs.length} of {totalItems} logs
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" disabled>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
             Previous
           </Button>
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
             Next
           </Button>
         </div>

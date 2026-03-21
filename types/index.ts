@@ -101,13 +101,14 @@ export interface AcademicConfig {
 }
 
 // User & Auth Types
-export type UserRole =
-  | "super-admin"
-  | "school-admin"
-  | "teacher"
-  | "student"
-  | "parent"
-  | "finance-officer";
+export type UserRole = {
+  id: string;
+  role: {
+    id: string;
+    name: string;
+    description: string;
+  };
+};
 
 export interface Permission {
   id: string;
@@ -184,15 +185,17 @@ export interface Subject {
 export interface GradingSystem {
   id: string;
   name: string;
+  description?: string;
   grades: Grade[];
+  isDefault?: boolean;
 }
 
 export interface Grade {
-  id: string;
-  letter: string;
+  id?: string;
+  grade: string;
   minScore: number;
   maxScore: number;
-  gpa: number;
+  gradePoint: number;
   remark: string;
 }
 
@@ -254,12 +257,12 @@ export interface Document {
 // Staff Types
 export interface Staff {
   id: string;
-  employeeId: string;
+  staffNumber: string;
   firstName: string;
   lastName: string;
   email: string;
   phone: string;
-  role: UserRole;
+  role: UserRole[];
   department?: string;
   subjects?: string[];
   classes?: string[];
@@ -490,15 +493,17 @@ export interface ApiResponse<T> {
 }
 
 export interface PaginatedResponse<T> {
-  data: T[];
-  meta: {
-    total: number;
-    page: number;
-    pageSize: number;
-    totalPages: number;
-    lastPage: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
+  data: {
+    data: T[];
+    meta: {
+      total: number;
+      page: number;
+      pageSize: number;
+      totalPages: number;
+      lastPage: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+    };
   };
 }
 
@@ -523,3 +528,67 @@ export type NextAction =
   | "SET_GRADING_SYSTEM"
   | "ADD_CREDIT_CARD"
   | "NONE";
+
+// ─── API Error (normalized by api-client.ts) ────────────────────────
+export interface ApiError {
+  statusCode: number;
+  message: string;
+  errors?: Record<string, string[]>;
+}
+
+// ─── Fee Structure ───────────────────────────────────────────────────
+export interface FeeStructure {
+  id: string;
+  name: string;
+  description: string;
+  amount: number;
+  applicableClasses: string[]; // classLevel IDs; empty = all classes
+  termId: string;
+  isActive: boolean;
+}
+
+// ─── Subject-Teacher-Class Assignment ───────────────────────────────
+export interface SubjectAssignment {
+  id: string;
+  subjectId: string;
+  subjectName: string;
+  teacherId: string;
+  teacherName: string;
+  classArmId: string;
+  classArmName: string;
+}
+
+// ─── Paystack Initialize Payment Response ───────────────────────────
+export interface PaystackInitResponse {
+  authorizationUrl: string;
+  reference: string;
+  accessCode: string;
+}
+
+// ─── Report Data Shapes ──────────────────────────────────────────────
+export interface AttendanceTrendPoint {
+  date: string;
+  rate: number;
+}
+
+export interface FeeCollectionPoint {
+  className: string;
+  collected: number;
+  outstanding: number;
+}
+
+export interface PerformancePoint {
+  grade: string;
+  count: number;
+}
+
+export interface ReportData {
+  attendanceTrend: AttendanceTrendPoint[];
+  feeCollection: FeeCollectionPoint[];
+  performance: PerformancePoint[];
+  stats: {
+    avgAttendance: number;
+    feeRecovery: number;
+    passRate: number;
+  };
+}

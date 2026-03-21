@@ -15,7 +15,6 @@ import {
 
 import { PageHeader } from "@/components/shared/page-header";
 import { DataTable } from "@/components/shared/table/data-table";
-import { fetchClasses } from "@/lib/api";
 import useStudentService from "./_service/useStudentService";
 import { getColumns } from "./_components/columns";
 import { DeleteStudentDialog } from "./_components/delete-dialog";
@@ -45,7 +44,7 @@ export default function StudentsPage() {
   } = useStudentService();
 
   const { data: classes } = useQuery<
-    AxiosResponse<Pick<ClassArm, "id" | "name">[]>
+    AxiosResponse<{ data: Pick<ClassArm, "id" | "name">[] }>
   >({
     queryKey: [queryKeys.CLASSES],
     queryFn: async () => axiosClient.get(CLASS_ENDPOINTS.GET_ALL_CLASS_ARMS),
@@ -96,7 +95,7 @@ export default function StudentsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Classes</SelectItem>
-              {classes?.data.map((opt) => (
+              {classes?.data?.data?.map((opt) => (
                 <SelectItem key={opt.id} value={opt.id}>
                   {opt.name}
                 </SelectItem>

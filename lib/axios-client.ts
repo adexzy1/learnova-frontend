@@ -1,19 +1,24 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
+// ─────────────────────────────────────────────────────────────
+// Axios instance (CLIENT ONLY)
+// Uses relative baseURL so Nginx handles routing + subdomains
+// ─────────────────────────────────────────────────────────────
+
 const axiosClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "/api/v1",
   headers: {
     "Content-Type": "application/json",
   },
   withCredentials: true,
 });
 
-// ─── Token Refresh Interceptor ──────────────────────────────────────
-// Since both access and refresh tokens are HTTP-only cookies, the browser
-// sends them automatically. On a 401, we call /auth/refresh which uses
-// the refresh token cookie to issue a new access token cookie, then retry.
+// ─────────────────────────────────────────────────────────────
+// Token Refresh Handling (HTTP-only cookies)
+// ─────────────────────────────────────────────────────────────
 
 let isRefreshing = false;
+
 let failedQueue: Array<{
   resolve: (value?: unknown) => void;
   reject: (reason?: unknown) => void;
@@ -38,7 +43,10 @@ axiosClient.interceptors.response.use(
       _retry?: boolean;
     };
 
-    // Only attempt refresh on 401 (Unauthorized), not on refresh endpoint itself
+    // Ignore if:
+    // - not 401
+    // - already retried
+    // - auth endpoints
     if (
       error.response?.status !== 401 ||
       originalRequest._retry ||
@@ -48,7 +56,7 @@ axiosClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // If already refreshing, queue this request to retry after refresh completes
+    // Queue requests while refreshing
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject, config: originalRequest });
@@ -59,23 +67,18 @@ axiosClient.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      // Call refresh endpoint — the refresh token cookie is sent automatically
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
-        {},
-        { withCredentials: true },
-      );
+      // ✅ Use same instance (important)
+      await axiosClient.post("/auth/refresh");
 
-      // Refresh succeeded — retry all queued requests
+      // Retry queued requests
       processQueue(null);
 
-      // Retry the original request
+      // Retry original request
       return axiosClient(originalRequest);
     } catch (refreshError) {
-      // Refresh failed — reject all queued requests and redirect to login
       processQueue(refreshError as AxiosError);
 
-      // Clear any client-side auth state and redirect
+      // Redirect on failure
       if (typeof window !== "undefined") {
         window.location.href = "/";
       }

@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { Search, Download, Eye, FileSpreadsheet, Printer } from "lucide-react"
-import useSWR from "swr"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,103 +33,35 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PageHeader } from "@/components/shared/page-header"
-import { mockApi } from "@/lib/api"
-
-interface StudentResult {
-  studentId: string
-  studentName: string
-  admissionNumber: string
-  classId: string
-  className: string
-  subjects: {
-    subjectId: string
-    subjectName: string
-    ca1: number
-    ca2: number
-    exam: number
-    total: number
-    grade: string
-    remark: string
-  }[]
-  totalScore: number
-  averageScore: number
-  position: number
-  totalStudents: number
-}
+import useResultsService from "./_service/useResultsService"
+import type { StudentResult } from "./_service/useResultsService"
 
 export default function ResultsPage() {
-  const [selectedSession, setSelectedSession] = useState("")
-  const [selectedTerm, setSelectedTerm] = useState("")
-  const [selectedClass, setSelectedClass] = useState("")
-  const [searchQuery, setSearchQuery] = useState("")
+  const {
+    selectedSession,
+    setSelectedSession,
+    selectedTerm,
+    setSelectedTerm,
+    selectedClass,
+    setSelectedClass,
+    searchQuery,
+    setSearchQuery,
+    sessions,
+    terms,
+    classOptions,
+    filteredResults,
+    resultsLoading,
+    hasSelection,
+    publishMutation,
+  } = useResultsService()
+
   const [selectedResult, setSelectedResult] = useState<StudentResult | null>(null)
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
 
-  const { data: sessions } = useSWR("sessions", mockApi.getSessions)
-  const { data: classes } = useSWR("classes", mockApi.getClasses)
-
-  // Mock results data
-  const results: StudentResult[] = [
-    {
-      studentId: "std-1",
-      studentName: "John Adewale",
-      admissionNumber: "ADM/2024/001",
-      classId: "class-1",
-      className: "JSS 1A",
-      subjects: [
-        { subjectId: "sub-1", subjectName: "Mathematics", ca1: 15, ca2: 18, exam: 52, total: 85, grade: "A", remark: "Excellent" },
-        { subjectId: "sub-2", subjectName: "English", ca1: 14, ca2: 16, exam: 48, total: 78, grade: "B", remark: "Very Good" },
-        { subjectId: "sub-3", subjectName: "Science", ca1: 16, ca2: 17, exam: 55, total: 88, grade: "A", remark: "Excellent" },
-        { subjectId: "sub-4", subjectName: "Social Studies", ca1: 13, ca2: 15, exam: 45, total: 73, grade: "B", remark: "Very Good" },
-        { subjectId: "sub-5", subjectName: "Civic Education", ca1: 17, ca2: 18, exam: 50, total: 85, grade: "A", remark: "Excellent" },
-      ],
-      totalScore: 409,
-      averageScore: 81.8,
-      position: 3,
-      totalStudents: 45,
-    },
-    {
-      studentId: "std-2",
-      studentName: "Amina Mohammed",
-      admissionNumber: "ADM/2024/002",
-      classId: "class-1",
-      className: "JSS 1A",
-      subjects: [
-        { subjectId: "sub-1", subjectName: "Mathematics", ca1: 18, ca2: 19, exam: 58, total: 95, grade: "A", remark: "Excellent" },
-        { subjectId: "sub-2", subjectName: "English", ca1: 17, ca2: 18, exam: 55, total: 90, grade: "A", remark: "Excellent" },
-        { subjectId: "sub-3", subjectName: "Science", ca1: 18, ca2: 18, exam: 56, total: 92, grade: "A", remark: "Excellent" },
-        { subjectId: "sub-4", subjectName: "Social Studies", ca1: 16, ca2: 17, exam: 52, total: 85, grade: "A", remark: "Excellent" },
-        { subjectId: "sub-5", subjectName: "Civic Education", ca1: 18, ca2: 19, exam: 55, total: 92, grade: "A", remark: "Excellent" },
-      ],
-      totalScore: 454,
-      averageScore: 90.8,
-      position: 1,
-      totalStudents: 45,
-    },
-    {
-      studentId: "std-3",
-      studentName: "Chukwuemeka Obi",
-      admissionNumber: "ADM/2024/003",
-      classId: "class-1",
-      className: "JSS 1A",
-      subjects: [
-        { subjectId: "sub-1", subjectName: "Mathematics", ca1: 12, ca2: 14, exam: 42, total: 68, grade: "C", remark: "Good" },
-        { subjectId: "sub-2", subjectName: "English", ca1: 14, ca2: 15, exam: 46, total: 75, grade: "B", remark: "Very Good" },
-        { subjectId: "sub-3", subjectName: "Science", ca1: 13, ca2: 14, exam: 44, total: 71, grade: "B", remark: "Very Good" },
-        { subjectId: "sub-4", subjectName: "Social Studies", ca1: 15, ca2: 16, exam: 48, total: 79, grade: "B", remark: "Very Good" },
-        { subjectId: "sub-5", subjectName: "Civic Education", ca1: 14, ca2: 15, exam: 45, total: 74, grade: "B", remark: "Very Good" },
-      ],
-      totalScore: 367,
-      averageScore: 73.4,
-      position: 12,
-      totalStudents: 45,
-    },
-  ]
-
-  const filteredResults = results.filter((result) =>
-    result.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    result.admissionNumber.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  // Publish tab selections (separate from view tab)
+  const [publishSession, setPublishSession] = useState("")
+  const [publishTerm, setPublishTerm] = useState("")
+  const [publishClass, setPublishClass] = useState("")
 
   const getGradeColor = (grade: string) => {
     switch (grade) {
@@ -154,23 +85,33 @@ export default function ResultsPage() {
     setIsViewDialogOpen(true)
   }
 
+  const handlePublish = () => {
+    if (!publishSession || !publishTerm) return
+    publishMutation.mutate({
+      sessionId: publishSession,
+      termId: publishTerm,
+      ...(publishClass && publishClass !== "all" ? { classId: publishClass } : {}),
+    })
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Results Management"
         description="View, manage, and publish student results"
-      >
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <FileSpreadsheet className="mr-2 h-4 w-4" />
-            Export All
-          </Button>
-          <Button>
-            <Printer className="mr-2 h-4 w-4" />
-            Bulk Print
-          </Button>
-        </div>
-      </PageHeader>
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline">
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              Export All
+            </Button>
+            <Button>
+              <Printer className="mr-2 h-4 w-4" />
+              Bulk Print
+            </Button>
+          </div>
+        }
+      />
 
       <Tabs defaultValue="view" className="space-y-4">
         <TabsList>
@@ -197,7 +138,7 @@ export default function ResultsPage() {
                       <SelectValue placeholder="Select session" />
                     </SelectTrigger>
                     <SelectContent>
-                      {sessions?.map((session) => (
+                      {sessions.map((session) => (
                         <SelectItem key={session.id} value={session.id}>
                           {session.name}
                         </SelectItem>
@@ -212,9 +153,11 @@ export default function ResultsPage() {
                       <SelectValue placeholder="Select term" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="term-1">First Term</SelectItem>
-                      <SelectItem value="term-2">Second Term</SelectItem>
-                      <SelectItem value="term-3">Third Term</SelectItem>
+                      {terms.map((term) => (
+                        <SelectItem key={term.id} value={term.id}>
+                          {term.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -225,9 +168,9 @@ export default function ResultsPage() {
                       <SelectValue placeholder="Select class" />
                     </SelectTrigger>
                     <SelectContent>
-                      {classes?.map((cls) => (
+                      {classOptions.map((cls) => (
                         <SelectItem key={cls.id} value={cls.id}>
-                          {cls.name} {cls.section}
+                          {cls.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -254,62 +197,76 @@ export default function ResultsPage() {
             <CardHeader>
               <CardTitle>Student Results</CardTitle>
               <CardDescription>
-                Showing {filteredResults.length} results
+                {hasSelection
+                  ? `Showing ${filteredResults.length} results`
+                  : "Select session, term, and class to load results"}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Student</TableHead>
-                    <TableHead>Admission No.</TableHead>
-                    <TableHead>Class</TableHead>
-                    <TableHead className="text-center">Total</TableHead>
-                    <TableHead className="text-center">Average</TableHead>
-                    <TableHead className="text-center">Position</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredResults.map((result) => (
-                    <TableRow key={result.studentId}>
-                      <TableCell className="font-medium">
-                        {result.studentName}
-                      </TableCell>
-                      <TableCell>{result.admissionNumber}</TableCell>
-                      <TableCell>{result.className}</TableCell>
-                      <TableCell className="text-center">
-                        {result.totalScore}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge className={getGradeColor(result.averageScore >= 80 ? "A" : result.averageScore >= 60 ? "B" : "C")}>
-                          {result.averageScore.toFixed(1)}%
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {result.position}/{result.totalStudents}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleViewResult(result)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Download className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Printer className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+              {!hasSelection ? (
+                <p className="text-center text-muted-foreground py-8">
+                  Please select a session, term, and class to view results.
+                </p>
+              ) : resultsLoading ? (
+                <p className="text-center text-muted-foreground py-8">Loading results...</p>
+              ) : filteredResults.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No results found for the selected filters.
+                </p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student</TableHead>
+                      <TableHead>Admission No.</TableHead>
+                      <TableHead>Class</TableHead>
+                      <TableHead className="text-center">Total</TableHead>
+                      <TableHead className="text-center">Average</TableHead>
+                      <TableHead className="text-center">Position</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredResults.map((result) => (
+                      <TableRow key={result.studentId}>
+                        <TableCell className="font-medium">
+                          {result.studentName}
+                        </TableCell>
+                        <TableCell>{result.admissionNumber}</TableCell>
+                        <TableCell>{result.className}</TableCell>
+                        <TableCell className="text-center">
+                          {result.totalScore}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge className={getGradeColor(result.averageScore >= 80 ? "A" : result.averageScore >= 60 ? "B" : "C")}>
+                            {result.averageScore.toFixed(1)}%
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {result.position}/{result.totalStudents}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleViewResult(result)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Download className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm">
+                              <Printer className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -323,54 +280,60 @@ export default function ResultsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="sticky left-0 bg-background">S/N</TableHead>
-                      <TableHead className="sticky left-10 bg-background min-w-[150px]">Student Name</TableHead>
-                      <TableHead className="text-center">Math</TableHead>
-                      <TableHead className="text-center">Eng</TableHead>
-                      <TableHead className="text-center">Sci</TableHead>
-                      <TableHead className="text-center">S.Std</TableHead>
-                      <TableHead className="text-center">Civic</TableHead>
-                      <TableHead className="text-center font-bold">Total</TableHead>
-                      <TableHead className="text-center font-bold">Avg</TableHead>
-                      <TableHead className="text-center font-bold">Pos</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredResults
-                      .sort((a, b) => a.position - b.position)
-                      .map((result, index) => (
-                        <TableRow key={result.studentId}>
-                          <TableCell className="sticky left-0 bg-background">
-                            {index + 1}
-                          </TableCell>
-                          <TableCell className="sticky left-10 bg-background font-medium">
-                            {result.studentName}
-                          </TableCell>
-                          {result.subjects.map((subject) => (
-                            <TableCell key={subject.subjectId} className="text-center">
-                              <span className={`inline-flex items-center justify-center w-10 h-6 rounded text-xs font-medium ${getGradeColor(subject.grade)}`}>
-                                {subject.total}
-                              </span>
+              {!hasSelection ? (
+                <p className="text-center text-muted-foreground py-8">
+                  Select session, term, and class in the View Results tab to load the broadsheet.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="sticky left-0 bg-background">S/N</TableHead>
+                        <TableHead className="sticky left-10 bg-background min-w-[150px]">Student Name</TableHead>
+                        {filteredResults[0]?.subjects.map((s) => (
+                          <TableHead key={s.subjectId} className="text-center">
+                            {s.subjectName.slice(0, 4)}
+                          </TableHead>
+                        ))}
+                        <TableHead className="text-center font-bold">Total</TableHead>
+                        <TableHead className="text-center font-bold">Avg</TableHead>
+                        <TableHead className="text-center font-bold">Pos</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredResults
+                        .sort((a, b) => a.position - b.position)
+                        .map((result, index) => (
+                          <TableRow key={result.studentId}>
+                            <TableCell className="sticky left-0 bg-background">
+                              {index + 1}
                             </TableCell>
-                          ))}
-                          <TableCell className="text-center font-bold">
-                            {result.totalScore}
-                          </TableCell>
-                          <TableCell className="text-center font-bold">
-                            {result.averageScore.toFixed(1)}
-                          </TableCell>
-                          <TableCell className="text-center font-bold">
-                            {result.position}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-              </div>
+                            <TableCell className="sticky left-10 bg-background font-medium">
+                              {result.studentName}
+                            </TableCell>
+                            {result.subjects.map((subject) => (
+                              <TableCell key={subject.subjectId} className="text-center">
+                                <span className={`inline-flex items-center justify-center w-10 h-6 rounded text-xs font-medium ${getGradeColor(subject.grade)}`}>
+                                  {subject.total}
+                                </span>
+                              </TableCell>
+                            ))}
+                            <TableCell className="text-center font-bold">
+                              {result.totalScore}
+                            </TableCell>
+                            <TableCell className="text-center font-bold">
+                              {result.averageScore.toFixed(1)}
+                            </TableCell>
+                            <TableCell className="text-center font-bold">
+                              {result.position}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -387,12 +350,12 @@ export default function ResultsPage() {
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-2">
                   <Label>Session</Label>
-                  <Select>
+                  <Select value={publishSession} onValueChange={setPublishSession}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select session" />
                     </SelectTrigger>
                     <SelectContent>
-                      {sessions?.map((session) => (
+                      {sessions.map((session) => (
                         <SelectItem key={session.id} value={session.id}>
                           {session.name}
                         </SelectItem>
@@ -402,28 +365,30 @@ export default function ResultsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Term</Label>
-                  <Select>
+                  <Select value={publishTerm} onValueChange={setPublishTerm}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select term" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="term-1">First Term</SelectItem>
-                      <SelectItem value="term-2">Second Term</SelectItem>
-                      <SelectItem value="term-3">Third Term</SelectItem>
+                      {terms.map((term) => (
+                        <SelectItem key={term.id} value={term.id}>
+                          {term.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Class</Label>
-                  <Select>
+                  <Select value={publishClass} onValueChange={setPublishClass}>
                     <SelectTrigger>
                       <SelectValue placeholder="All classes" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Classes</SelectItem>
-                      {classes?.map((cls) => (
+                      {classOptions.map((cls) => (
                         <SelectItem key={cls.id} value={cls.id}>
-                          {cls.name} {cls.section}
+                          {cls.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -431,36 +396,14 @@ export default function ResultsPage() {
                 </div>
               </div>
 
-              <div className="rounded-lg border p-4">
-                <h4 className="font-medium mb-4">Publication Status</h4>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">JSS 1 Results</p>
-                      <p className="text-sm text-muted-foreground">145 students</p>
-                    </div>
-                    <Badge className="bg-green-100 text-green-800">Published</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">JSS 2 Results</p>
-                      <p className="text-sm text-muted-foreground">132 students</p>
-                    </div>
-                    <Badge className="bg-amber-100 text-amber-800">Pending</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">JSS 3 Results</p>
-                      <p className="text-sm text-muted-foreground">128 students</p>
-                    </div>
-                    <Badge className="bg-amber-100 text-amber-800">Pending</Badge>
-                  </div>
-                </div>
-              </div>
-
               <div className="flex gap-2">
                 <Button variant="outline">Preview Before Publishing</Button>
-                <Button>Publish Selected Results</Button>
+                <Button
+                  onClick={handlePublish}
+                  disabled={!publishSession || !publishTerm || publishMutation.isPending}
+                >
+                  {publishMutation.isPending ? "Publishing..." : "Publish Selected Results"}
+                </Button>
               </div>
             </CardContent>
           </Card>

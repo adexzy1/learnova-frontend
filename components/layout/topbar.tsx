@@ -34,11 +34,17 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
+import { useQuery } from "@tanstack/react-query";
+import type { AxiosResponse } from "axios";
 import { useTenant } from "@/providers/tenant-provider";
 // import { useAuth } from "@/providers/auth-provider";
 import { useOffline } from "@/hooks/use-offline";
 import { MobileNav } from "./mobile-nav";
 import { useAuth } from "@/providers/app-auth-provider";
+import apiClient from "@/lib/api-client";
+import { NOTIFICATIONS_ENDPOINTS } from "@/lib/api-routes";
+import { queryKeys } from "@/app/constants/queryKeys";
+import type { Notification } from "@/types";
 
 const PERSONA_META: Record<
   string,
@@ -83,6 +89,12 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
   // const { user, logout } = useAuth()
   const { isOnline, unsyncedCount } = useOffline();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const { data: notificationsResponse } = useQuery<AxiosResponse<Notification[]>>({
+    queryKey: [queryKeys.NOTIFICATIONS],
+    queryFn: () => apiClient.get(NOTIFICATIONS_ENDPOINTS.GET_ALL),
+  });
+  const notifUnreadCount = (notificationsResponse?.data ?? []).filter((n) => !n.isRead).length;
 
   const handleLogout = async () => {
     router.push("/");
@@ -194,27 +206,48 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center">
-                2
-              </span>
+              {notifUnreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center">
+                  {notifUnreadCount > 9 ? "9+" : notifUnreadCount}
+                </span>
+              )}
               <span className="sr-only">Notifications</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80">
             <DropdownMenuLabel>Notifications</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="flex flex-col items-start gap-1 cursor-pointer">
-              <span className="font-medium">Term Results Published</span>
-              <span className="text-xs text-muted-foreground">
-                First term results for 2024/2025 session have been published.
-              </span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="flex flex-col items-start gap-1 cursor-pointer">
-              <span className="font-medium">Payment Reminder</span>
-              <span className="text-xs text-muted-foreground">
-                School fees payment deadline is approaching.
-              </span>
-            </DropdownMenuItem>
+            {(notificationsResponse?.data ?? [])
+              .filter((n) => !n.isRead)
+              .slice(0, 3)
+              .map((n) => (
+                <DropdownMenuItem
+                  key={n.id}
+                  className="flex flex-col items-start gap-1 cursor-pointer"
+                  asChild={!!n.link}
+                >
+                  {n.link ? (
+                    <Link href={n.link}>
+                      <span className="font-medium">{n.title}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {n.message}
+                      </span>
+                    </Link>
+                  ) : (
+                    <>
+                      <span className="font-medium">{n.title}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {n.message}
+                      </span>
+                    </>
+                  )}
+                </DropdownMenuItem>
+              ))}
+            {notifUnreadCount === 0 && (
+              <DropdownMenuItem disabled className="text-center justify-center">
+                <span className="text-xs text-muted-foreground">No new notifications</span>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link

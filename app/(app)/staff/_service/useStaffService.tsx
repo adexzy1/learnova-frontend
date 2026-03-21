@@ -33,7 +33,7 @@ const useStaffService = () => {
       axiosClient.get(STAFF_ENDPOINTS.GET_ALL_STAFF, {
         params: {
           page: pagination.page,
-          per_page: pagination.per_page,
+          limit: pagination.per_page,
           search: filters.search || undefined,
           filters: JSON.stringify({
             role: filters.role !== "all" ? filters.role : undefined,
@@ -72,8 +72,8 @@ const useStaffService = () => {
   };
 
   return {
-    staff: staffResponse?.data.data,
-    meta: staffResponse?.data?.meta,
+    staff: staffResponse?.data.data.data,
+    meta: staffResponse?.data?.data.meta,
     pagination,
     setPagination,
     filters,

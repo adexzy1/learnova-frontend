@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
   Plus,
   Search,
@@ -10,15 +9,13 @@ import {
   Archive,
   MoreVertical,
   Paperclip,
-  CheckCheck,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
@@ -30,21 +27,54 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
-import { fetchMessages } from "@/lib/api";
+import useMessagesService from "./_service/useMessagesService";
 import type { Message } from "@/types";
 
 export default function MessagesPage() {
+  const { messages, isLoading, sendMutation, replyMutation, markReadMutation } =
+    useMessagesService();
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [composeOpen, setComposeOpen] = useState(false);
+  const [composeTo, setComposeTo] = useState("");
+  const [composeSubject, setComposeSubject] = useState("");
+  const [composeBody, setComposeBody] = useState("");
+  const [replyBody, setReplyBody] = useState("");
 
-  const { data: messages, isLoading } = useQuery({
-    queryKey: ["messages"],
-    queryFn: fetchMessages,
-  });
-
-  // Select first message by default if none selected
-  if (!selectedMessage && messages && messages.length > 0) {
+  // Select first message by default
+  if (!selectedMessage && messages.length > 0 && !isLoading) {
     setSelectedMessage(messages[0]);
+  }
+
+  function handleSelectMessage(message: Message) {
+    setSelectedMessage(message);
+    if (!message.readAt) {
+      markReadMutation.mutate(message.id);
+    }
+  }
+
+  function handleSendMessage() {
+    if (!composeTo.trim() || !composeSubject.trim() || !composeBody.trim()) return;
+    sendMutation.mutate(
+      { to: composeTo.trim(), subject: composeSubject.trim(), content: composeBody.trim() },
+      {
+        onSuccess: () => {
+          setComposeTo("");
+          setComposeSubject("");
+          setComposeBody("");
+          setComposeOpen(false);
+        },
+      }
+    );
+  }
+
+  function handleSendReply() {
+    if (!selectedMessage || !replyBody.trim()) return;
+    replyMutation.mutate(
+      { messageId: selectedMessage.id, content: replyBody.trim() },
+      {
+        onSuccess: () => setReplyBody(""),
+      }
+    );
   }
 
   return (
@@ -67,17 +97,27 @@ export default function MessagesPage() {
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
                     <Label>To</Label>
-                    <Input placeholder="Select recipient..." />
+                    <Input
+                      placeholder="Select recipient..."
+                      value={composeTo}
+                      onChange={(e) => setComposeTo(e.target.value)}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Subject</Label>
-                    <Input placeholder="Message subject" />
+                    <Input
+                      placeholder="Message subject"
+                      value={composeSubject}
+                      onChange={(e) => setComposeSubject(e.target.value)}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Message</Label>
                     <Textarea
                       placeholder="Type your message here..."
                       className="min-h-[150px]"
+                      value={composeBody}
+                      onChange={(e) => setComposeBody(e.target.value)}
                     />
                   </div>
                   <div className="flex justify-end gap-2">
@@ -87,8 +127,11 @@ export default function MessagesPage() {
                     >
                       Cancel
                     </Button>
-                    <Button onClick={() => setComposeOpen(false)}>
-                      Send Message
+                    <Button
+                      onClick={handleSendMessage}
+                      disabled={sendMutation.isPending}
+                    >
+                      {sendMutation.isPending ? "Sending..." : "Send Message"}
                     </Button>
                   </div>
                 </div>
@@ -103,10 +146,10 @@ export default function MessagesPage() {
 
         <ScrollArea className="flex-1">
           <div className="flex flex-col">
-            {messages?.map((message) => (
+            {messages.map((message) => (
               <button
                 key={message.id}
-                onClick={() => setSelectedMessage(message)}
+                onClick={() => handleSelectMessage(message)}
                 className={`flex flex-col gap-2 p-4 text-left transition-colors hover:bg-muted/50 border-b last:border-0 ${
                   selectedMessage?.id === message.id ? "bg-muted" : ""
                 }`}
@@ -173,10 +216,18 @@ export default function MessagesPage() {
           </ScrollArea>
           <Separator />
           <div className="p-4">
-            <form className="flex flex-col gap-4">
+            <form
+              className="flex flex-col gap-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSendReply();
+              }}
+            >
               <Textarea
                 placeholder={`Reply to ${selectedMessage.senderName}...`}
                 className="min-h-[100px]"
+                value={replyBody}
+                onChange={(e) => setReplyBody(e.target.value)}
               />
               <div className="flex items-center justify-between">
                 <div className="flex gap-2">
@@ -184,9 +235,9 @@ export default function MessagesPage() {
                     <Paperclip className="h-4 w-4" />
                   </Button>
                 </div>
-                <Button>
+                <Button type="submit" disabled={replyMutation.isPending}>
                   <Send className="mr-2 h-4 w-4" />
-                  Send Reply
+                  {replyMutation.isPending ? "Sending..." : "Send Reply"}
                 </Button>
               </div>
             </form>

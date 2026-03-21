@@ -46,6 +46,7 @@ export const CLASS_ENDPOINTS = {
 
 export const SUBJECT_ENDPOINTS = {
   GET_ALL_SUBJECTS: "/academics/subject",
+  GET_SELECTABLE_SUBJECTS: "/academics/subject/select",
   GET_SUBJECT_BY_ID: "/academics/subject/:id",
   CREATE_SUBJECT: "/academics/subject",
   UPDATE_SUBJECT: "/academics/subject/:id",
@@ -74,6 +75,7 @@ export const TENANT_ENDPOINTS = {
   CREATE_TENANT: "/tenant",
   UPDATE_TENANT: "/tenant/:id",
   DELETE_TENANT: "/tenant/:id",
+  GET_STATS: "/tenant/stats",
 };
 
 export const PLAN_ENDPOINTS = {
@@ -109,4 +111,125 @@ export const AUTH_ENDPOINTS = {
   SESSION: "/auth/session",
   REFRESH: "/auth/refresh",
   SWITCH_PERSONA: "/auth/switch-persona",
+};
+
+export const GRADING_ENDPOINTS = {
+  GET_ALL: "/academics/grading-system",
+  GET_BY_ID: "/academics/grading-system/:id",
+  CREATE: "/academics/grading-system",
+  UPDATE: "/academics/grading-system/:id",
+  DELETE: "/academics/grading-system/:id",
+  SET_DEFAULT: "/academics/grading-system/:id/set-default",
+};
+
+export const ASSESSMENT_ENDPOINTS = {
+  CA_CONFIGS_GET: "/academics/assessment/ca-configs",
+  CA_CONFIGS_CREATE: "/academics/assessment/ca-configs",
+  CA_CONFIGS_UPDATE: "/academics/assessment/ca-configs/:id",
+  CA_CONFIGS_DELETE: "/academics/assessment/ca-configs/:id",
+  CA_SCORES_GET: "/academics/assessment/ca",
+  CA_SCORES_SAVE: "/academics/assessment/ca",
+  EXAM_SCORES_GET: "/academics/assessment/exam",
+  EXAM_SCORES_SAVE: "/academics/assessment/exam",
+  TIMETABLE_GET: "/academics/assessment/timetable",
+  TIMETABLE_CREATE: "/academics/assessment/timetable",
+  TIMETABLE_UPDATE: "/academics/assessment/timetable/:id",
+  TIMETABLE_DELETE: "/academics/assessment/timetable/:id",
+  EXAMINATIONS_GET: "/academics/assessment/examinations",
+  EXAMINATIONS_CREATE: "/academics/assessment/examinations",
+  EXAMINATIONS_UPDATE: "/academics/assessment/examinations/:id",
+};
+
+export const ATTENDANCE_ENDPOINTS = {
+  GET_BY_CLASS_DATE: "/academics/attendance",
+  CLASS_ROSTER: "/academics/attendance/class-roster",
+  SAVE: "/academics/attendance",
+  GET_SUMMARY: "/academics/attendance/summary",
+  GET_ALL: "/academics/attendance",
+};
+
+export const RESULTS_ENDPOINTS = {
+  GET_CLASS_RESULTS: "/academics/results",
+  GET_STUDENT_RESULT: "/academics/results/student/:studentId",
+  PUBLISH: "/academics/results/publish",
+  GET_ALL: "/academics/results",
+  GET_BY_ID: "/academics/results/:id",
+};
+
+export const DISCIPLINE_ENDPOINTS = {
+  GET_ALL: "/discipline",
+  GET_BY_ID: "/discipline/:id",
+  CREATE: "/discipline",
+  UPDATE: "/discipline/:id",
+  UPDATE_STATUS: "/discipline/:id/status",
+  DELETE: "/discipline/:id",
+};
+
+export const ADMISSIONS_ENDPOINTS = {
+  GET_ALL: "/admissions",
+  GET_BY_ID: "/admissions/:id",
+  CREATE: "/admissions",
+  UPDATE: "/admissions/:id",
+  UPDATE_STATUS: "/admissions/:id/status",
+  DELETE: "/admissions/:id",
+};
+
+export const FINANCE_ENDPOINTS = {
+  INVOICES_GET_ALL: "/finance/invoices",
+  INVOICES_GET_BY_ID: "/finance/invoices/:id",
+  INVOICES_CREATE: "/finance/invoices",
+  INVOICES_UPDATE: "/finance/invoices/:id",
+  INVOICES_DELETE: "/finance/invoices/:id",
+  PAYMENTS_GET_ALL: "/finance/payments",
+  PAYMENTS_CREATE: "/finance/payments",
+  LEDGER_GET: "/finance/ledger",
+  FEE_STRUCTURES_GET_ALL: "/finance/fee-structures",
+  FEE_STRUCTURES_GET_BY_ID: "/finance/fee-structures/:id",
+  FEE_STRUCTURES_CREATE: "/finance/fee-structures",
+  FEE_STRUCTURES_UPDATE: "/finance/fee-structures/:id",
+  FEE_STRUCTURES_DELETE: "/finance/fee-structures/:id",
+  INIT_PAYMENT: "/finance/invoices/:id/initialize-payment",
+};
+
+export const COMMUNICATIONS_ENDPOINTS = {
+  MESSAGES_GET: "/communications/messages",
+  MESSAGES_CREATE: "/communications/messages",
+  MESSAGES_MARK_READ: "/communications/messages/:id/read",
+  MESSAGES_REPLY: "/communications/messages/:id/reply",
+  MESSAGES_GET_BY_ID: "/communications/messages/:id",
+};
+
+export const NOTIFICATIONS_ENDPOINTS = {
+  GET_ALL: "/notifications",
+  GET_BY_ID: "/notifications/:id",
+  MARK_READ: "/notifications/:id/read",
+  MARK_ALL_READ: "/notifications/mark-all-read",
+};
+
+export const REPORTS_ENDPOINTS = {
+  ATTENDANCE_TREND: "/reports/attendance-trend",
+  FEE_COLLECTION: "/reports/fee-collection",
+  PERFORMANCE: "/reports/performance",
+};
+
+export const AUDIT_ENDPOINTS = {
+  GET_ALL: "/audit",
+  GET_BY_ID: "/audit/:id",
+};
+
+export const SUPER_ADMIN_CONFIG_ENDPOINTS = {
+  GET: "/super-admin/config",
+  UPDATE: "/super-admin/config",
+};
+
+export const ASSIGNMENTS_ENDPOINTS = {
+  GET_ALL: "/academics/assignments",
+  GET_BY_ID: "/academics/assignments/:id",
+  CREATE: "/academics/assignments",
+  DELETE: "/academics/assignments/:id",
+};
+
+export const GUARDIAN_ENDPOINTS = {
+  GET_MY_CHILDREN: "/guardians/my-children",
+  GET_CHILD_STATS: "/guardians/children/:childId/stats",
 };

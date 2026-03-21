@@ -1,11 +1,8 @@
 "use client";
-
 import React from "react";
-
 import { TenantProvider } from "./tenant-provider";
 import { QueryProvider } from "./query-provider";
 import { Toaster } from "sonner";
-import { AppAuthProvider } from "./app-auth-provider";
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -23,5 +20,5 @@ export function Providers({ children }: ProvidersProps) {
 }
 
 export { TenantProvider, useTenant } from "./tenant-provider";
-export { AuthProvider, useAuth } from "./auth-provider";
+export { AppAuthProvider, useAuth } from "./app-auth-provider";
 export { QueryProvider } from "./query-provider";

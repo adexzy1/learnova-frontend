@@ -9,7 +9,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { AxiosResponse } from "axios";
-import { PaginationState } from "@tanstack/react-table";
 
 const useSubjectService = () => {
   const queryClient = useQueryClient();
@@ -17,20 +16,20 @@ const useSubjectService = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
   const [deleteSubject, setDeleteSubject] = useState<Subject | null>(null);
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
+  const [pagination, setPagination] = useState({
+    page: 1,
+    per_page: 10,
   });
 
   const { data: subjects, isLoading } = useQuery<
     AxiosResponse<PaginatedResponse<Subject>>
   >({
-    queryKey: [queryKeys.SUBJECTS, pagination.pageIndex, pagination.pageSize],
+    queryKey: [queryKeys.SUBJECTS, pagination.page, pagination.per_page],
     queryFn: async () =>
       axiosClient.get(SUBJECT_ENDPOINTS.GET_ALL_SUBJECTS, {
         params: {
-          page: pagination.pageIndex + 1,
-          per_page: pagination.pageSize,
+          page: pagination.page,
+          limit: pagination.per_page,
         },
       }),
   });
@@ -107,8 +106,8 @@ const useSubjectService = () => {
   };
 
   return {
-    subjects: subjects?.data.data,
-    pageCount: subjects?.data?.meta?.lastPage,
+    subjects: subjects?.data.data.data,
+    meta: subjects?.data?.data.meta,
     pagination,
     setPagination,
     isLoading,

@@ -67,21 +67,22 @@ export function StaffForm({
   const selectedClasses = form.watch("classes") || [];
 
   // Fetch subjects from API
-  const { data: subjectsData } = useQuery<AxiosResponse<Subject[]>>({
+  const { data: subjectsData } = useQuery<AxiosResponse<{ data: Subject[] }>>({
     queryKey: [queryKeys.SUBJECTS],
-    queryFn: async () => axiosClient.get(SUBJECT_ENDPOINTS.GET_ALL_SUBJECTS),
+    queryFn: async () =>
+      axiosClient.get(SUBJECT_ENDPOINTS.GET_SELECTABLE_SUBJECTS),
   });
 
   // Fetch class arms from API
   const { data: classesData } = useQuery<
-    AxiosResponse<Pick<ClassArm, "id" | "name">[]>
+    AxiosResponse<{ data: Pick<ClassArm, "id" | "name">[] }>
   >({
     queryKey: [queryKeys.CLASSES],
     queryFn: async () => axiosClient.get(CLASS_ENDPOINTS.GET_ALL_CLASS_ARMS),
   });
 
-  const subjects = subjectsData?.data || [];
-  const classArms = classesData?.data || [];
+  const subjects = subjectsData?.data.data || [];
+  const classArms = classesData?.data.data || [];
 
   const toggleSubject = (subjectName: string) => {
     const current = [...selectedSubjects];

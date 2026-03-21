@@ -1,12 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import {
-  MoreHorizontal,
-  Eye,
-  Pencil,
-  UserX,
-} from "lucide-react";
+import { MoreHorizontal, Eye, Pencil, UserX } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -19,7 +14,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Staff } from "@/types";
+import { Staff, UserRole } from "@/types";
 
 function getStatusBadge(status: Staff["status"]) {
   switch (status) {
@@ -42,45 +37,23 @@ function getStatusBadge(status: Staff["status"]) {
   }
 }
 
-function getRoleBadge(role: string) {
-  switch (role) {
-    case "school-admin":
-      return (
-        <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
-          Admin
-        </Badge>
-      );
-    case "teacher":
-      return (
-        <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-          Teacher
-        </Badge>
-      );
-    case "finance-officer":
-      return (
-        <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
-          Finance
-        </Badge>
-      );
-    default:
-      return (
-        <Badge variant="outline" className="capitalize">
-          {role.replace("-", " ")}
-        </Badge>
-      );
-  }
+function getRoleBadge(roleName: string) {
+  const key = (roleName || "").toLowerCase().replace(/\s+/g, "-");
+  return (
+    <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
+      {roleName}
+    </Badge>
+  );
 }
 
 export const getColumns = (
   handleDeactivate: (staff: Staff) => void,
 ): ColumnDef<Staff>[] => [
   {
-    accessorKey: "employeeId",
-    header: "Employee ID",
+    accessorKey: "staffNumber",
+    header: "Staff Number",
     cell: ({ row }) => (
-      <span className="font-mono text-sm">
-        {row.getValue("employeeId")}
-      </span>
+      <span className="font-mono text-sm">{row.getValue("staffNumber")}</span>
     ),
   },
   {
@@ -111,9 +84,18 @@ export const getColumns = (
     },
   },
   {
-    accessorKey: "role",
+    accessorKey: "roles",
     header: "Role",
-    cell: ({ row }) => getRoleBadge(row.getValue("role")),
+    cell: ({ row }) => {
+      const roles = (row.getValue("roles") as UserRole[]) || [];
+      return (
+        <div className="flex flex-wrap items-center gap-2">
+          {roles.map((r) => (
+            <span key={r.id}>{getRoleBadge(r.role?.name ?? "")}</span>
+          ))}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "status",

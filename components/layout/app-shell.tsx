@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import type { NextAction, User } from "@/types";
-import { AppAuthProvider } from "@/providers/app-auth-provider";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Topbar } from "@/components/layout/topbar";
+import { AppAuthProvider } from "@/providers";
 
 interface AppShellProps {
   user: User | null;

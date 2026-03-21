@@ -39,7 +39,7 @@ const useStudentService = () => {
       axiosClient.get(STUDENT_ENDPOINTS.GET_ALL_STUDENTS, {
         params: {
           page: pagination.page,
-          per_page: pagination.per_page,
+          limit: pagination.per_page,
           search: filters.search || undefined,
           filters: JSON.stringify({
             classId: filters.class !== "all" ? filters.class : undefined,
@@ -49,8 +49,7 @@ const useStudentService = () => {
         },
       }),
   });
-
-  console.log(studentsResponse?.data.data);
+  console.log("Students response:", studentsResponse?.data);
 
   // Mutation for delete
   const deleteMutation = useMutation({
@@ -82,8 +81,8 @@ const useStudentService = () => {
   };
 
   return {
-    students: studentsResponse?.data.data,
-    meta: studentsResponse?.data?.meta,
+    students: studentsResponse?.data.data.data,
+    meta: studentsResponse?.data?.data.meta,
     pagination,
     setPagination,
     filters,

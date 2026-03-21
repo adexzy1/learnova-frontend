@@ -255,10 +255,10 @@ export type EntranceExamFormData = z.infer<typeof entranceExamSchema>;
 
 // Grading Schema
 export const gradeSchema = z.object({
-  letter: z.string().min(1, "Grade letter is required"),
+  grade: z.string().min(1, "Grade letter is required"),
   minScore: z.number().min(0, "Min score cannot be negative"),
   maxScore: z.number().min(1, "Max score must be at least 1"),
-  gpa: z.number().min(0).max(5, "GPA must be between 0 and 5"),
+  gradePoint: z.number().min(0).max(5, "Grade point must be between 0 and 5"),
   remark: z.string().min(1, "Remark is required"),
 });
 

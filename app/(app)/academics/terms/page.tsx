@@ -24,6 +24,7 @@ import axiosClient from "@/lib/axios-client";
 import { TERM_ENDPOINTS } from "@/lib/api-routes";
 import { TermFormDialog } from "./_components/term-form-dialog";
 import { DeleteTermDialog } from "./_components/delete-term-dialog";
+import { DataTablePagination } from "@/components/shared/table/pagination";
 
 export default function TermsPage() {
   const queryClient = useQueryClient();
@@ -33,9 +34,9 @@ export default function TermsPage() {
   const [termToDelete, setTermToDelete] = useState<Term | null>(null);
 
   // Pagination and Search State
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
+  const [pagination, setPagination] = useState({
+    page: 1,
+    per_page: 20,
   });
   const [search, setSearch] = useState("");
 
@@ -46,15 +47,15 @@ export default function TermsPage() {
     queryFn: async () =>
       await axiosClient.get(TERM_ENDPOINTS.GET_ALL_TERMS, {
         params: {
-          page: `${pagination.pageIndex + 1}`,
-          per_page: `${pagination.pageSize}`,
+          page: `${pagination.page}`,
+          limit: `${pagination.per_page}`,
           search: search || undefined,
         },
       }),
   });
 
-  const terms = termsResponse?.data?.data || [];
-  const pageCount = termsResponse?.data?.meta.totalPages || 0;
+  const terms = termsResponse?.data?.data.data || [];
+  const meta = termsResponse?.data.data.meta;
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -195,14 +196,21 @@ export default function TermsPage() {
         columns={columns}
         data={terms}
         isLoading={isLoading}
-        searchPlaceholder="Search terms..."
-        searchColumn="name"
         emptyMessage="No terms found. Create your first academic term."
-        pageCount={pageCount}
-        pagination={pagination}
-        onPaginationChange={setPagination}
-        search={search}
-        onSearchChange={setSearch}
+      />
+
+      <DataTablePagination
+        page={pagination.page}
+        pageSize={pagination.per_page}
+        totalPages={meta?.lastPage || 0}
+        hasNextPage={meta?.hasNextPage || false}
+        hasPrevPage={meta?.hasPrevPage || false}
+        onPaginationChange={(pagination) =>
+          setPagination({
+            page: pagination.page,
+            per_page: pagination.pageSize,
+          })
+        }
       />
 
       <DeleteTermDialog

@@ -1,21 +1,24 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useCallback } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
-import { Save, Lock, Unlock, AlertCircle, WifiOff, RefreshCw } from 'lucide-react'
+import { Save, Lock, Unlock, AlertCircle, WifiOff } from "lucide-react";
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -23,129 +26,42 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Skeleton } from '@/components/ui/skeleton'
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from '@/components/ui/alert'
+} from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-import { PageHeader } from '@/components/shared/page-header'
-import { fetchStudents, fetchClasses, fetchSubjects, fetchTerms, saveCAScores } from '@/lib/api'
-import { useOffline, useAutosaveDraft } from '@/hooks/use-offline'
-import type { Student, CAScore } from '@/types'
-
-interface ScoreEntry {
-  studentId: string
-  score: number | ''
-}
+import { PageHeader } from "@/components/shared/page-header";
+import { useOffline } from "@/hooks/use-offline";
+import useCAService from "./_service/useCAService";
 
 export default function CAEntryPage() {
-  const queryClient = useQueryClient()
-  const { isOnline, isOffline } = useOffline()
-  
-  const [selectedClass, setSelectedClass] = useState<string>('')
-  const [selectedSubject, setSelectedSubject] = useState<string>('')
-  const [selectedTerm, setSelectedTerm] = useState<string>('')
-  const [scores, setScores] = useState<Record<string, ScoreEntry>>({})
-  const [isLocked, setIsLocked] = useState(false)
+  const { isOffline } = useOffline();
 
-  // Generate draft ID based on selections
-  const draftId = `ca-${selectedClass}-${selectedSubject}-${selectedTerm}`
-  const { save: saveDraft, restore: restoreDraft, clear: clearDraft, hasDraft, lastSaved } = useAutosaveDraft<Record<string, ScoreEntry>>('ca-scores', draftId)
+  const {
+    selectedClass,
+    setSelectedClass,
+    selectedSubject,
+    setSelectedSubject,
+    selectedTerm,
+    setSelectedTerm,
+    hasSelection,
+    isLocked,
+    setIsLocked,
+    classes,
+    subjects,
+    terms,
+    students,
+    caConfigs,
+    totalMaxScore,
+    caLoading,
+    getScore,
+    handleScoreChange,
+    getStudentTotal,
+    handleSave,
+    saveMutation,
+  } = useCAService();
 
-  // Fetch data
-  const { data: classes } = useQuery({
-    queryKey: ['classes'],
-    queryFn: fetchClasses,
-  })
-
-  const { data: subjects } = useQuery({
-    queryKey: ['subjects'],
-    queryFn: fetchSubjects,
-  })
-
-  const { data: terms } = useQuery({
-    queryKey: ['terms'],
-    queryFn: fetchTerms,
-  })
-
-  const { data: studentsResponse, isLoading: studentsLoading } = useQuery({
-    queryKey: ['students', selectedClass],
-    queryFn: () => fetchStudents({ classId: selectedClass }),
-    enabled: !!selectedClass,
-  })
-
-  const students = studentsResponse?.data || []
-
-  // Restore draft on load
-  useEffect(() => {
-    if (selectedClass && selectedSubject && selectedTerm) {
-      const draft = restoreDraft()
-      if (draft) {
-        setScores(draft)
-        toast.info('Restored unsaved scores from draft')
-      } else {
-        // Initialize empty scores
-        const initialScores: Record<string, ScoreEntry> = {}
-        students.forEach((student) => {
-          initialScores[student.id] = { studentId: student.id, score: '' }
-        })
-        setScores(initialScores)
-      }
-    }
-  }, [selectedClass, selectedSubject, selectedTerm, students, restoreDraft])
-
-  // Auto-save on score changes (with debounce)
-  const handleScoreChange = useCallback((studentId: string, value: string) => {
-    const numValue = value === '' ? '' : Math.min(Math.max(0, parseInt(value) || 0), 20)
-    
-    setScores(prev => {
-      const updated = {
-        ...prev,
-        [studentId]: { studentId, score: numValue }
-      }
-      // Auto-save to draft
-      saveDraft(updated)
-      return updated
-    })
-  }, [saveDraft])
-
-  // Save mutation
-  const saveMutation = useMutation({
-    mutationFn: async () => {
-      const scoresArray = Object.values(scores)
-        .filter(s => s.score !== '')
-        .map(s => ({
-          studentId: s.studentId,
-          subjectId: selectedSubject,
-          termId: selectedTerm,
-          caConfigId: 'ca-test-1', // Would come from config
-          score: s.score as number,
-        }))
-      
-      return saveCAScores(scoresArray)
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ca-scores'] })
-      clearDraft()
-      toast.success('Scores saved successfully!')
-    },
-    onError: () => {
-      toast.error('Failed to save scores. Your changes have been saved as a draft.')
-    },
-  })
-
-  // Flatten arms for dropdown
-  const classOptions = classes?.flatMap((level) => 
-    level.arms.map((arm) => ({
-      id: arm.id,
-      name: `${level.name} ${arm.name}`,
-    }))
-  ) || []
-
-  const canSave = selectedClass && selectedSubject && selectedTerm && Object.keys(scores).length > 0
+  const canSave = hasSelection && !isLocked && !saveMutation.isPending;
 
   return (
     <div className="space-y-6">
@@ -153,30 +69,19 @@ export default function CAEntryPage() {
         title="Continuous Assessment Entry"
         description="Enter and manage CA scores for students"
         breadcrumbs={[
-          { label: 'Dashboard', href: '/dashboard' },
-          { label: 'Assessments', href: '/assessments' },
-          { label: 'CA Entry' },
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Assessments", href: "/assessments" },
+          { label: "CA Entry" },
         ]}
       />
 
-      {/* Offline Alert */}
       {isOffline && (
         <Alert variant="destructive">
           <WifiOff className="h-4 w-4" />
           <AlertTitle>You are offline</AlertTitle>
           <AlertDescription>
-            Changes will be saved locally and synced when you're back online.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Draft Indicator */}
-      {hasDraft && isOnline && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Unsaved Draft</AlertTitle>
-          <AlertDescription>
-            You have unsaved changes. {lastSaved && `Last saved: ${lastSaved.toLocaleTimeString()}`}
+            Changes cannot be saved while offline. Please reconnect and try
+            again.
           </AlertDescription>
         </Alert>
       )}
@@ -196,7 +101,7 @@ export default function CAEntryPage() {
                 <SelectValue placeholder="Select class" />
               </SelectTrigger>
               <SelectContent>
-                {classOptions.map((cls) => (
+                {classes.map((cls) => (
                   <SelectItem key={cls.id} value={cls.id}>
                     {cls.name}
                   </SelectItem>
@@ -209,7 +114,7 @@ export default function CAEntryPage() {
                 <SelectValue placeholder="Select subject" />
               </SelectTrigger>
               <SelectContent>
-                {subjects?.map((subject) => (
+                {subjects.map((subject) => (
                   <SelectItem key={subject.id} value={subject.id}>
                     {subject.name}
                   </SelectItem>
@@ -222,7 +127,7 @@ export default function CAEntryPage() {
                 <SelectValue placeholder="Select term" />
               </SelectTrigger>
               <SelectContent>
-                {terms?.map((term) => (
+                {terms.map((term) => (
                   <SelectItem key={term.id} value={term.id}>
                     {term.name}
                   </SelectItem>
@@ -230,70 +135,62 @@ export default function CAEntryPage() {
               </SelectContent>
             </Select>
 
-            <div className="flex gap-2">
-              <Button
-                variant={isLocked ? 'destructive' : 'outline'}
-                onClick={() => setIsLocked(!isLocked)}
-                className="flex-1"
-              >
-                {isLocked ? (
-                  <>
-                    <Lock className="mr-2 h-4 w-4" />
-                    Locked
-                  </>
-                ) : (
-                  <>
-                    <Unlock className="mr-2 h-4 w-4" />
-                    Unlocked
-                  </>
-                )}
-              </Button>
-            </div>
+            <Button
+              variant={isLocked ? "destructive" : "outline"}
+              onClick={() => setIsLocked(!isLocked)}
+            >
+              {isLocked ? (
+                <>
+                  <Lock className="mr-2 h-4 w-4" />
+                  Locked
+                </>
+              ) : (
+                <>
+                  <Unlock className="mr-2 h-4 w-4" />
+                  Unlocked
+                </>
+              )}
+            </Button>
           </div>
         </CardContent>
       </Card>
 
       {/* Score Entry Table */}
-      {selectedClass && selectedSubject && selectedTerm && (
+      {hasSelection && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-lg">Enter Scores</CardTitle>
               <CardDescription>
-                Maximum score: 20 points per CA
+                {caConfigs.length > 0
+                  ? `${caConfigs.map((c) => `${c.name}: max ${c.maxScore}`).join(" | ")} | Total: ${totalMaxScore}`
+                  : "No CA configurations found for this term"}
               </CardDescription>
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  const draft = restoreDraft()
-                  if (draft) setScores(draft)
-                }}
-                disabled={!hasDraft}
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Restore Draft
-              </Button>
-              <Button
-                onClick={() => saveMutation.mutate()}
-                disabled={!canSave || isLocked || saveMutation.isPending}
-              >
-                <Save className="mr-2 h-4 w-4" />
-                {saveMutation.isPending ? 'Saving...' : 'Save Scores'}
-              </Button>
-            </div>
+            <Button onClick={handleSave} disabled={!canSave}>
+              <Save className="mr-2 h-4 w-4" />
+              {saveMutation.isPending ? "Saving..." : "Save Scores"}
+            </Button>
           </CardHeader>
           <CardContent>
-            {studentsLoading ? (
+            {caLoading ? (
               <div className="space-y-2">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Skeleton key={i} className="h-12 w-full" />
                 ))}
               </div>
             ) : students.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No students found in this class
+              <div className="flex flex-col items-center gap-2 py-8 text-center text-muted-foreground">
+                <AlertCircle className="h-8 w-8" />
+                <p>No students found in this class</p>
+              </div>
+            ) : caConfigs.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-8 text-center text-muted-foreground">
+                <AlertCircle className="h-8 w-8" />
+                <p>
+                  No CA configurations found for this term. Please set up CA
+                  configs first.
+                </p>
               </div>
             ) : (
               <Table>
@@ -302,53 +199,53 @@ export default function CAEntryPage() {
                     <TableHead className="w-16">S/N</TableHead>
                     <TableHead>Admission No.</TableHead>
                     <TableHead>Student Name</TableHead>
-                    <TableHead className="w-32">CA 1 (20)</TableHead>
-                    <TableHead className="w-32">CA 2 (15)</TableHead>
+                    {caConfigs.map((config) => (
+                      <TableHead key={config.id} className="w-32">
+                        {config.name} ({config.maxScore})
+                      </TableHead>
+                    ))}
                     <TableHead className="w-24 text-right">Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {students.map((student, index) => {
-                    const ca1 = scores[student.id]?.score || ''
-                    const total = typeof ca1 === 'number' ? ca1 : 0
-                    
-                    return (
-                      <TableRow key={student.id}>
-                        <TableCell className="font-medium">{index + 1}</TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {student.admissionNumber}
-                        </TableCell>
-                        <TableCell>
-                          {student.firstName} {student.lastName}
-                        </TableCell>
-                        <TableCell>
+                  {students.map((student, index) => (
+                    <TableRow key={student.id}>
+                      <TableCell className="font-medium">
+                        {index + 1}
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">
+                        {student.admissionNumber}
+                      </TableCell>
+                      <TableCell>
+                        {student.firstName} {student.lastName}
+                      </TableCell>
+                      {caConfigs.map((config) => (
+                        <TableCell key={config.id}>
                           <Input
                             type="number"
                             min={0}
-                            max={20}
-                            value={ca1}
-                            onChange={(e) => handleScoreChange(student.id, e.target.value)}
-                            disabled={isLocked}
+                            max={config.maxScore}
+                            value={getScore(student.id, config.id)}
+                            onChange={(e) =>
+                              handleScoreChange(
+                                student.id,
+                                config.id,
+                                e.target.value,
+                                config.maxScore,
+                              )
+                            }
+                            disabled={isLocked || config.isLocked}
                             className="w-20"
                           />
                         </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min={0}
-                            max={15}
-                            disabled={isLocked}
-                            className="w-20"
-                          />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Badge variant="secondary" className="font-mono">
-                            {total}/35
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
+                      ))}
+                      <TableCell className="text-right">
+                        <Badge variant="secondary" className="font-mono">
+                          {getStudentTotal(student.id)}/{totalMaxScore}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             )}
@@ -356,5 +253,5 @@ export default function CAEntryPage() {
         </Card>
       )}
     </div>
-  )
+  );
 }

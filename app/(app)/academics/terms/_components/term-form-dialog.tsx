@@ -64,7 +64,7 @@ export function TermFormDialog({
   });
 
   const { data: sessions, isLoading: isLoadingSessions } = useQuery<
-    AxiosResponse<Pick<Session, "id" | "name">[]>
+    AxiosResponse<{ data: Pick<Session, "id" | "name">[] }>
   >({
     queryKey: [queryKeys.SESSION],
     queryFn: async () =>
@@ -150,7 +150,7 @@ export function TermFormDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {sessions?.data?.map((session) => (
+                      {sessions?.data?.data?.map((session) => (
                         <SelectItem key={session.id} value={session.id}>
                           {session.name}
                         </SelectItem>

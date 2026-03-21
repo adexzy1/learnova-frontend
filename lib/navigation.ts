@@ -132,6 +132,12 @@ export const tenantNavigation: NavSection[] = [
         permission: [PERMISSIONS.ACADEMIC_VIEW, PERMISSIONS.ACADEMIC_MANAGE],
         children: [
           {
+            title: "CA Configs",
+            href: "/assessments/ca-configs",
+            icon: Settings,
+            permission: PERMISSIONS.ACADEMIC_MANAGE,
+          },
+          {
             title: "CA Entry",
             href: "/assessments/ca",
             icon: ClipboardCheck,

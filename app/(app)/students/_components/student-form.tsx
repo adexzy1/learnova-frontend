@@ -65,11 +65,13 @@ export function StudentForm({
   });
 
   const { data: classes } = useQuery<
-    AxiosResponse<Pick<ClassArm, "id" | "name">[]>
+    AxiosResponse<{ data: Pick<ClassArm, "id" | "name">[] }>
   >({
     queryKey: [queryKeys.CLASSES],
     queryFn: async () => axiosClient.get(CLASS_ENDPOINTS.GET_ALL_CLASS_ARMS),
   });
+
+  console.log("Classes data:", classes?.data.data);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -316,7 +318,7 @@ export function StudentForm({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {classes?.data?.map((opt) => (
+                          {classes?.data?.data?.map((opt) => (
                             <SelectItem key={opt.id} value={opt.id}>
                               {opt.name}
                             </SelectItem>

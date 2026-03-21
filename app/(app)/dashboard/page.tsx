@@ -1,10 +1,10 @@
 "use client";
-
-import { useAuth } from "@/providers/app-auth-provider";
 import SuperAdminDashboard from "@/components/dashboards/super-admin-dashboard";
 import ParentDashboard from "@/components/dashboards/parent-dashboard";
+import { ChildSelectorProvider } from "@/app/(app)/parent/ChildSelectorContext";
 import StudentDashboard from "@/components/dashboards/student-dashboard";
 import TenantDashboard from "@/components/dashboards/tenant-dashboard";
+import { useAuth } from "@/providers";
 
 export default function DashboardPage() {
   const { activePersona } = useAuth();
@@ -13,7 +13,11 @@ export default function DashboardPage() {
     case "SYSTEM":
       return <SuperAdminDashboard />;
     case "GUARDIAN":
-      return <ParentDashboard />;
+      return (
+        <ChildSelectorProvider>
+          <ParentDashboard />
+        </ChildSelectorProvider>
+      );
     case "STUDENT":
       return <StudentDashboard />;
     case "ADMIN":

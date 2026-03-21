@@ -1,23 +1,32 @@
-'use client'
+"use client";
 
-import React from "react"
+import React from "react";
+import { format } from "date-fns";
+import {
+  Save,
+  Calendar,
+  Check,
+  X,
+  Clock,
+  AlertCircle,
+  Pencil,
+} from "lucide-react";
 
-import { useState, useCallback } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
-import { Save, Calendar, Check, X, Clock, AlertCircle } from 'lucide-react'
-import { format } from 'date-fns'
-
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -25,132 +34,80 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+} from "@/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 
-import { PageHeader } from '@/components/shared/page-header'
-import { fetchStudents, fetchClasses, saveAttendance } from '@/lib/api'
-import { cn } from '@/lib/utils'
-import type { AttendanceRecord } from '@/types'
+import { PageHeader } from "@/components/shared/page-header";
+import { cn } from "@/lib/utils";
+import useAttendanceService, {
+  type AttendanceStatus,
+} from "./_service/useAttendanceService";
 
-type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused'
-
-interface AttendanceEntry {
-  studentId: string
-  status: AttendanceStatus
-  notes?: string
-}
-
-const statusConfig: Record<AttendanceStatus, { label: string; icon: React.ReactNode; className: string }> = {
-  present: { 
-    label: 'Present', 
+const statusConfig: Record<
+  AttendanceStatus,
+  {
+    label: string;
+    icon: React.ReactNode;
+    className: string;
+    badgeVariant: string;
+  }
+> = {
+  present: {
+    label: "Present",
     icon: <Check className="h-4 w-4" />,
-    className: 'bg-green-100 text-green-700 hover:bg-green-200 border-green-300'
+    className:
+      "bg-green-100 text-green-700 hover:bg-green-200 border-green-300",
+    badgeVariant: "bg-green-100 text-green-700 border-green-300",
   },
-  absent: { 
-    label: 'Absent', 
+  absent: {
+    label: "Absent",
     icon: <X className="h-4 w-4" />,
-    className: 'bg-red-100 text-red-700 hover:bg-red-200 border-red-300'
+    className: "bg-red-100 text-red-700 hover:bg-red-200 border-red-300",
+    badgeVariant: "bg-red-100 text-red-700 border-red-300",
   },
-  late: { 
-    label: 'Late', 
+  late: {
+    label: "Late",
     icon: <Clock className="h-4 w-4" />,
-    className: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-yellow-300'
+    className:
+      "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-yellow-300",
+    badgeVariant: "bg-yellow-100 text-yellow-700 border-yellow-300",
   },
-  excused: { 
-    label: 'Excused', 
+  excused: {
+    label: "Excused",
     icon: <AlertCircle className="h-4 w-4" />,
-    className: 'bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-300'
+    className: "bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-300",
+    badgeVariant: "bg-blue-100 text-blue-700 border-blue-300",
   },
-}
+};
 
 export default function AttendancePage() {
-  const queryClient = useQueryClient()
-  const [selectedClass, setSelectedClass] = useState<string>('')
-  const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'))
-  const [attendance, setAttendance] = useState<Record<string, AttendanceEntry>>({})
+  const {
+    selectedClass,
+    selectedDate,
+    handleClassChange,
+    handleDateChange,
+    classOptions,
+    classesLoading,
+    students,
+    studentsLoading,
+    existingAttendanceLoading,
+    attendance,
+    hasExistingRecords,
+    isEditMode,
+    setIsEditMode,
+    stats,
+    handleStatusChange,
+    markAll,
+    resetAttendance,
+    handleSave,
+    saveMutation,
+  } = useAttendanceService();
 
-  // Fetch data
-  const { data: classes } = useQuery({
-    queryKey: ['classes'],
-    queryFn: fetchClasses,
-  })
-
-  const { data: studentsResponse, isLoading: studentsLoading } = useQuery({
-    queryKey: ['students', selectedClass],
-    queryFn: () => fetchStudents({ classId: selectedClass }),
-    enabled: !!selectedClass,
-  })
-
-  const students = studentsResponse?.data || []
-
-  // Initialize attendance when students load
-  const initializeAttendance = useCallback(() => {
-    const initial: Record<string, AttendanceEntry> = {}
-    students.forEach((student) => {
-      initial[student.id] = { studentId: student.id, status: 'present' }
-    })
-    setAttendance(initial)
-  }, [students])
-
-  // Update attendance status
-  const handleStatusChange = (studentId: string, status: AttendanceStatus) => {
-    setAttendance(prev => ({
-      ...prev,
-      [studentId]: { ...prev[studentId], studentId, status }
-    }))
-  }
-
-  // Mark all students
-  const markAll = (status: AttendanceStatus) => {
-    const updated: Record<string, AttendanceEntry> = {}
-    students.forEach((student) => {
-      updated[student.id] = { studentId: student.id, status }
-    })
-    setAttendance(updated)
-  }
-
-  // Save mutation
-  const saveMutation = useMutation({
-    mutationFn: async () => {
-      const records = Object.values(attendance).map(entry => ({
-        studentId: entry.studentId,
-        classId: selectedClass,
-        date: selectedDate,
-        status: entry.status,
-        notes: entry.notes,
-        markedBy: 'current-user', // Would come from auth
-      }))
-      return saveAttendance(records)
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['attendance'] })
-      toast.success('Attendance saved successfully!')
-    },
-    onError: () => {
-      toast.error('Failed to save attendance. Please try again.')
-    },
-  })
-
-  // Stats
-  const stats = {
-    total: students.length,
-    present: Object.values(attendance).filter(a => a.status === 'present').length,
-    absent: Object.values(attendance).filter(a => a.status === 'absent').length,
-    late: Object.values(attendance).filter(a => a.status === 'late').length,
-    excused: Object.values(attendance).filter(a => a.status === 'excused').length,
-  }
-
-  // Flatten arms for dropdown
-  const classOptions = classes?.flatMap((level) => 
-    level.arms.map((arm) => ({
-      id: arm.id,
-      name: `${level.name} ${arm.name}`,
-    }))
-  ) || []
+  const isLoading = studentsLoading || existingAttendanceLoading;
 
   return (
     <div className="space-y-6">
@@ -158,8 +115,8 @@ export default function AttendancePage() {
         title="Attendance"
         description="Mark and manage daily student attendance"
         breadcrumbs={[
-          { label: 'Dashboard', href: '/dashboard' },
-          { label: 'Attendance' },
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Attendance" },
         ]}
       />
 
@@ -172,18 +129,16 @@ export default function AttendancePage() {
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label>Class</Label>
-              <Select 
-                value={selectedClass} 
-                onValueChange={(value) => {
-                  setSelectedClass(value)
-                  setAttendance({})
-                }}
+              <Select
+                value={selectedClass}
+                onValueChange={handleClassChange}
+                disabled={classesLoading}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select class" />
                 </SelectTrigger>
                 <SelectContent>
-                  {classOptions.map((cls) => (
+                  {classOptions?.map((cls) => (
                     <SelectItem key={cls.id} value={cls.id}>
                       {cls.name}
                     </SelectItem>
@@ -197,27 +152,27 @@ export default function AttendancePage() {
               <Input
                 type="date"
                 value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                max={format(new Date(), 'yyyy-MM-dd')}
+                onChange={(e) => handleDateChange(e.target.value)}
+                max={format(new Date(), "yyyy-MM-dd")}
               />
             </div>
 
             <div className="space-y-2">
               <Label>Quick Actions</Label>
               <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
-                  onClick={() => markAll('present')}
-                  disabled={!selectedClass}
+                  onClick={() => markAll("present")}
+                  disabled={!selectedClass || !isEditMode}
                 >
                   Mark All Present
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
-                  onClick={initializeAttendance}
-                  disabled={!selectedClass}
+                  onClick={resetAttendance}
+                  disabled={!selectedClass || !isEditMode}
                 >
                   Reset
                 </Button>
@@ -239,25 +194,33 @@ export default function AttendancePage() {
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Present</CardDescription>
-              <CardTitle className="text-2xl text-green-600">{stats.present}</CardTitle>
+              <CardTitle className="text-2xl text-green-600">
+                {stats.present}
+              </CardTitle>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Absent</CardDescription>
-              <CardTitle className="text-2xl text-red-600">{stats.absent}</CardTitle>
+              <CardTitle className="text-2xl text-red-600">
+                {stats.absent}
+              </CardTitle>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Late</CardDescription>
-              <CardTitle className="text-2xl text-yellow-600">{stats.late}</CardTitle>
+              <CardTitle className="text-2xl text-yellow-600">
+                {stats.late}
+              </CardTitle>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Excused</CardDescription>
-              <CardTitle className="text-2xl text-blue-600">{stats.excused}</CardTitle>
+              <CardTitle className="text-2xl text-blue-600">
+                {stats.excused}
+              </CardTitle>
             </CardHeader>
           </Card>
         </div>
@@ -269,22 +232,40 @@ export default function AttendancePage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-lg">
-                Attendance for {format(new Date(selectedDate), 'EEEE, MMMM d, yyyy')}
+                Attendance for{" "}
+                {format(
+                  new Date(selectedDate + "T00:00:00"),
+                  "EEEE, MMMM d, yyyy",
+                )}
               </CardTitle>
               <CardDescription>
-                Click on a status to mark attendance
+                {hasExistingRecords && !isEditMode
+                  ? "Attendance already recorded for this date. Click Edit to make changes."
+                  : "Click on a status to mark attendance"}
               </CardDescription>
             </div>
-            <Button
-              onClick={() => saveMutation.mutate()}
-              disabled={Object.keys(attendance).length === 0 || saveMutation.isPending}
-            >
-              <Save className="mr-2 h-4 w-4" />
-              {saveMutation.isPending ? 'Saving...' : 'Save Attendance'}
-            </Button>
+            <div className="flex gap-2">
+              {hasExistingRecords && !isEditMode ? (
+                <Button variant="outline" onClick={() => setIsEditMode(true)}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleSave}
+                  disabled={
+                    Object.keys(attendance).length === 0 ||
+                    saveMutation.isPending
+                  }
+                >
+                  <Save className="mr-2 h-4 w-4" />
+                  {saveMutation.isPending ? "Saving..." : "Save Attendance"}
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
-            {studentsLoading ? (
+            {isLoading ? (
               <div className="space-y-2">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Skeleton key={i} className="h-16 w-full" />
@@ -305,18 +286,25 @@ export default function AttendancePage() {
                 </TableHeader>
                 <TableBody>
                   {students.map((student, index) => {
-                    const entry = attendance[student.id]
-                    const currentStatus = entry?.status || 'present'
-                    
+                    const entry = attendance[student.id];
+                    const currentStatus = entry?.status ?? "present";
+                    const config = statusConfig[currentStatus];
+
                     return (
                       <TableRow key={student.id}>
-                        <TableCell className="font-medium">{index + 1}</TableCell>
+                        <TableCell className="font-medium">
+                          {index + 1}
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <Avatar className="h-8 w-8">
-                              <AvatarImage src={student.photo || "/placeholder.svg"} alt={student.firstName} />
+                              <AvatarImage
+                                src={student.photo ?? "/placeholder.svg"}
+                                alt={student.firstName}
+                              />
                               <AvatarFallback>
-                                {student.firstName.charAt(0)}{student.lastName.charAt(0)}
+                                {student.firstName.charAt(0)}
+                                {student.lastName.charAt(0)}
                               </AvatarFallback>
                             </Avatar>
                             <div>
@@ -330,29 +318,53 @@ export default function AttendancePage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex justify-center gap-2">
-                            {(Object.keys(statusConfig) as AttendanceStatus[]).map((status) => {
-                              const config = statusConfig[status]
-                              const isActive = currentStatus === status
-                              
-                              return (
-                                <button
-                                  key={status}
-                                  onClick={() => handleStatusChange(student.id, status)}
-                                  className={cn(
-                                    'flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-sm font-medium transition-all',
-                                    isActive ? config.className : 'bg-muted/50 text-muted-foreground hover:bg-muted'
-                                  )}
-                                >
-                                  {config.icon}
-                                  <span className="hidden sm:inline">{config.label}</span>
-                                </button>
-                              )
-                            })}
-                          </div>
+                          {/* Read-only view */}
+                          {hasExistingRecords && !isEditMode ? (
+                            <div className="flex justify-center">
+                              <span
+                                className={cn(
+                                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-sm font-medium",
+                                  config.badgeVariant,
+                                )}
+                              >
+                                {config.icon}
+                                <span>{config.label}</span>
+                              </span>
+                            </div>
+                          ) : (
+                            /* Editable status buttons */
+                            <div className="flex justify-center gap-2">
+                              {(
+                                Object.keys(statusConfig) as AttendanceStatus[]
+                              ).map((status) => {
+                                const sc = statusConfig[status];
+                                const isActive = currentStatus === status;
+
+                                return (
+                                  <button
+                                    key={status}
+                                    onClick={() =>
+                                      handleStatusChange(student.id, status)
+                                    }
+                                    className={cn(
+                                      "flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-sm font-medium transition-all",
+                                      isActive
+                                        ? sc.className
+                                        : "bg-muted/50 text-muted-foreground hover:bg-muted",
+                                    )}
+                                  >
+                                    {sc.icon}
+                                    <span className="hidden sm:inline">
+                                      {sc.label}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
                         </TableCell>
                       </TableRow>
-                    )
+                    );
                   })}
                 </TableBody>
               </Table>
@@ -361,5 +373,5 @@ export default function AttendancePage() {
         </Card>
       )}
     </div>
-  )
+  );
 }

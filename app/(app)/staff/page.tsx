@@ -42,8 +42,6 @@ export default function StaffPage() {
 
   const columns = getColumns(handleDeactivate);
 
-  console.log(staff);
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -70,11 +68,11 @@ export default function StaffPage() {
       />
 
       <DataTableToolbar>
-        <DataTableSearch
+        {/* <DataTableSearch
           value={filters.search}
           onChange={(val) => setFilters({ ...filters, search: val })}
           placeholder="Search staff..."
-        />
+        /> */}
         <div className="flex items-center gap-4">
           <Select
             value={filters.role}

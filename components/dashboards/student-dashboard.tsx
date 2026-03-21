@@ -1,15 +1,14 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import type { AxiosResponse } from "axios";
 import {
-  BookOpen,
-  Calendar,
   Clock,
   GraduationCap,
-  TrendingUp,
+  Calendar,
   AlertCircle,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, differenceInDays, startOfDay, isBefore } from "date-fns";
 
 import {
   Card,
@@ -19,32 +18,89 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { PageHeader } from "@/components/shared/page-header";
-import { fetchStudent, fetchTermResults } from "@/lib/api";
+import { useAuth } from "@/providers/app-auth-provider";
+import apiClient from "@/lib/api-client";
+import {
+  RESULTS_ENDPOINTS,
+  ATTENDANCE_ENDPOINTS,
+  ASSESSMENT_ENDPOINTS,
+} from "@/lib/api-routes";
+import { queryKeys } from "@/app/constants/queryKeys";
+import type { TermResult, ExamTimetable } from "@/types";
 
-// Mock current student ID
-const CURRENT_STUDENT_ID = "student-1";
-const CURRENT_TERM_ID = "term-1";
+interface AttendanceSummary {
+  totalDays: number;
+  present: number;
+  absent: number;
+  late: number;
+  excused: number;
+  attendancePercentage: number;
+}
 
 export default function StudentDashboard() {
-  const { data: student, isLoading: loadingStudent } = useQuery({
-    queryKey: ["student", CURRENT_STUDENT_ID],
-    queryFn: () => fetchStudent(CURRENT_STUDENT_ID),
+  const { user } = useAuth();
+  const studentId = user?.id;
+
+  // Fetch current term results
+  const { data: resultResponse, isLoading: loadingResults } = useQuery<
+    AxiosResponse<TermResult>
+  >({
+    queryKey: [queryKeys.RESULTS, studentId, "current"],
+    queryFn: () =>
+      apiClient.get(
+        RESULTS_ENDPOINTS.GET_STUDENT_RESULT.replace(":studentId", studentId!)
+      ),
+    enabled: !!studentId,
   });
 
-  const { data: results, isLoading: loadingResults } = useQuery({
-    queryKey: ["results", CURRENT_STUDENT_ID, CURRENT_TERM_ID],
-    queryFn: () => fetchTermResults(CURRENT_STUDENT_ID, CURRENT_TERM_ID),
+  // Fetch attendance summary
+  const { data: attendanceResponse, isLoading: loadingAttendance } = useQuery<
+    AxiosResponse<AttendanceSummary>
+  >({
+    queryKey: [queryKeys.ATTENDANCE_SUMMARY, studentId],
+    queryFn: () =>
+      apiClient.get(ATTENDANCE_ENDPOINTS.GET_SUMMARY, {
+        params: { studentId },
+      }),
+    enabled: !!studentId,
   });
 
-  if (loadingStudent) {
+  // Fetch exam timetable
+  const { data: timetableResponse, isLoading: loadingTimetable } = useQuery<
+    AxiosResponse<(ExamTimetable & { subjectName?: string })[]>
+  >({
+    queryKey: [queryKeys.TIMETABLE, "student-exams"],
+    queryFn: () => apiClient.get(ASSESSMENT_ENDPOINTS.TIMETABLE_GET),
+    enabled: !!studentId,
+  });
+
+  const result = resultResponse?.data;
+  const attendance = attendanceResponse?.data;
+  const exams = timetableResponse?.data ?? [];
+
+  // Compute next exam
+  const today = startOfDay(new Date());
+  const upcomingExams = exams
+    .filter((e) => !isBefore(startOfDay(new Date(e.date)), today))
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const nextExam = upcomingExams[0];
+  const daysToNextExam = nextExam
+    ? differenceInDays(startOfDay(new Date(nextExam.date)), today)
+    : null;
+
+  const isLoading = loadingResults || loadingAttendance;
+
+  if (isLoading) {
     return (
       <div className="space-y-4 p-8">
         <Skeleton className="h-12 w-64" />
-        <Skeleton className="h-96 w-full" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-28 w-full rounded-lg" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -53,22 +109,30 @@ export default function StudentDashboard() {
     <div className="space-y-6">
       <div className="flex flex-col gap-2">
         <h2 className="text-3xl font-bold tracking-tight">
-          Welcome back, {student?.firstName} 👋
+          Welcome back, {user?.firstName ?? "Student"}
         </h2>
         <p className="text-muted-foreground">
-          Here's what's happening in your academic life today.
+          Here&apos;s what&apos;s happening in your academic life today.
         </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current GPA</CardTitle>
+            <CardTitle className="text-sm font-medium">Average Score</CardTitle>
             <GraduationCap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{results?.gpa || "3.50"}</div>
-            <p className="text-xs text-muted-foreground">Top 10% of class</p>
+            <div className="text-2xl font-bold">
+              {result?.averageScore != null
+                ? `${result.averageScore.toFixed(1)}%`
+                : "N/A"}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {result?.rank != null
+                ? `Position ${result.rank}${result.totalStudents ? ` of ${result.totalStudents}` : ""}`
+                : "Current term"}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -77,19 +141,27 @@ export default function StudentDashboard() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">96%</div>
-            <p className="text-xs text-muted-foreground">Present 48/50 days</p>
+            <div className="text-2xl font-bold">
+              {attendance?.attendancePercentage != null
+                ? `${attendance.attendancePercentage.toFixed(0)}%`
+                : "N/A"}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {attendance
+                ? `Present ${attendance.present}/${attendance.totalDays} days`
+                : "Current term"}
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tasks Due</CardTitle>
+            <CardTitle className="text-sm font-medium">Upcoming Exams</CardTitle>
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
+            <div className="text-2xl font-bold">{upcomingExams.length}</div>
             <p className="text-xs text-muted-foreground">
-              2 Assignments, 1 Project
+              {upcomingExams.length === 1 ? "exam" : "exams"} scheduled
             </p>
           </CardContent>
         </Card>
@@ -99,97 +171,110 @@ export default function StudentDashboard() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12 Days</div>
-            <p className="text-xs text-muted-foreground">Physics CA Test</p>
+            <div className="text-2xl font-bold">
+              {daysToNextExam != null
+                ? daysToNextExam === 0
+                  ? "Today"
+                  : `${daysToNextExam} Day${daysToNextExam === 1 ? "" : "s"}`
+                : "None"}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {nextExam?.subjectName ?? "No upcoming exams"}
+            </p>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        {/* Upcoming exams list */}
         <Card className="col-span-4">
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>
-              Your latest academic updates and notifications
-            </CardDescription>
+            <CardTitle>Upcoming Exams</CardTitle>
+            <CardDescription>Your exam schedule</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {[
-                {
-                  title: "Chemistry Assignment Due",
-                  time: "2 hours ago",
-                  type: "urgent",
-                },
-                {
-                  title: "Math Result Published",
-                  time: "Yesterday",
-                  type: "info",
-                },
-                {
-                  title: "School Fees Acknowledged",
-                  time: "2 days ago",
-                  type: "success",
-                },
-              ].map((item, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between p-3 border rounded-lg"
-                >
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {item.title}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{item.time}</p>
-                  </div>
-                  <Badge
-                    variant={
-                      item.type === "urgent" ? "destructive" : "secondary"
-                    }
+            {loadingTimetable ? (
+              <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            ) : upcomingExams.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4">
+                No upcoming exams scheduled.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {upcomingExams.slice(0, 5).map((exam) => (
+                  <div
+                    key={exam.id}
+                    className="flex items-center justify-between p-3 border rounded-lg"
                   >
-                    {item.type}
-                  </Badge>
-                </div>
-              ))}
-            </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {exam.subjectName ?? exam.subjectId}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(exam.date), "EEE, MMM d")} &middot;{" "}
+                        {exam.startTime} – {exam.endTime}
+                        {exam.venue && ` · ${exam.venue}`}
+                      </p>
+                    </div>
+                    <Badge variant="secondary">
+                      {differenceInDays(startOfDay(new Date(exam.date)), today) === 0
+                        ? "Today"
+                        : `${differenceInDays(startOfDay(new Date(exam.date)), today)}d`}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
+
+        {/* Today's info card */}
         <Card className="col-span-3">
           <CardHeader>
-            <CardTitle>Today's Schedule</CardTitle>
-            <CardDescription>
-              {format(new Date(), "EEEE, MMMM d")}
-            </CardDescription>
+            <CardTitle>Today</CardTitle>
+            <CardDescription>{format(new Date(), "EEEE, MMMM d")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[
-                { time: "08:00 AM", subject: "Mathematics", room: "Hall A" },
-                {
-                  time: "09:30 AM",
-                  subject: "English Language",
-                  room: "Class 1B",
-                },
-                { time: "11:00 AM", subject: "Physics", room: "Lab 1" },
-                { time: "01:00 PM", subject: "Lunch Break", room: "Cafeteria" },
-              ].map((slot, i) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-4 pb-4 last:pb-0 last:mb-0 border-l-2 border-primary/20 pl-4 relative"
-                >
-                  <div className="absolute -left-[5px] top-0 h-2.5 w-2.5 rounded-full bg-primary" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {slot.subject}
-                    </p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{slot.time}</span>
-                      <span>•</span>
-                      <span>{slot.room}</span>
-                    </div>
-                  </div>
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Attendance Rate</p>
+                  <p className="text-xs text-muted-foreground">Current term</p>
                 </div>
-              ))}
+                <span
+                  className={`text-lg font-bold ${
+                    (attendance?.attendancePercentage ?? 0) >= 75
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {attendance?.attendancePercentage != null
+                    ? `${attendance.attendancePercentage.toFixed(0)}%`
+                    : "—"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Days Present</p>
+                  <p className="text-xs text-muted-foreground">Out of total school days</p>
+                </div>
+                <span className="text-lg font-bold">
+                  {attendance ? `${attendance.present}/${attendance.totalDays}` : "—"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Days Absent</p>
+                  <p className="text-xs text-muted-foreground">Including late arrivals</p>
+                </div>
+                <span className="text-lg font-bold text-red-600">
+                  {attendance ? attendance.absent + attendance.late : "—"}
+                </span>
+              </div>
             </div>
           </CardContent>
         </Card>

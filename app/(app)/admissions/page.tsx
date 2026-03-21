@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
   Users,
   FileCheck,
@@ -44,16 +43,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 import { PageHeader } from "@/components/shared/page-header";
-import { fetchAdmissions } from "@/lib/api";
+import useAdmissionsService from "./_service/useAdmissionsService";
 
 export default function AdmissionsPage() {
-  const { data: admissionDoc, isLoading } = useQuery({
-    queryKey: ["admissions"],
-    queryFn: () => fetchAdmissions(),
-  });
-
-  // Safe access
-  const applications = admissionDoc?.data || [];
+  const { applications, isLoading, updateStatusMutation } = useAdmissionsService();
 
   return (
     <div className="space-y-6">
@@ -284,10 +277,27 @@ export default function AdmissionsPage() {
                               <Button
                                 variant="outline"
                                 className="text-destructive hover:text-destructive"
+                                disabled={updateStatusMutation.isPending}
+                                onClick={() =>
+                                  updateStatusMutation.mutate({
+                                    id: app.id,
+                                    payload: { status: "rejected" },
+                                  })
+                                }
                               >
                                 Reject
                               </Button>
-                              <Button>Approve for Exam</Button>
+                              <Button
+                                disabled={updateStatusMutation.isPending}
+                                onClick={() =>
+                                  updateStatusMutation.mutate({
+                                    id: app.id,
+                                    payload: { status: "approved" },
+                                  })
+                                }
+                              >
+                                Approve for Exam
+                              </Button>
                             </div>
                           </DialogContent>
                         </Dialog>

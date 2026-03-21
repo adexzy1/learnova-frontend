@@ -13,8 +13,6 @@ export default async function AppLayout({
     redirect("/");
   }
 
-  console.log(session);
-
   switch (session.nextAction) {
     case "COMPLETE_ONBOARDING":
       redirect("/onboarding");
@@ -26,11 +24,11 @@ export default async function AppLayout({
 
   return (
     <AppShell
-      user={session.user}
-      permissions={session.permissions}
-      personas={session?.personas}
-      activePersona={session?.activePersona}
-      nextAction={session?.nextAction}
+      user={session.data.user}
+      permissions={session.data.permissions}
+      personas={session?.data.personas}
+      activePersona={session?.data.activePersona}
+      nextAction={session?.data.nextAction}
     >
       {children}
     </AppShell>

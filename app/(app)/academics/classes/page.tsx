@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/shared/page-header";
-import type { ClassLevel } from "@/types";
+import type { ClassLevel, PaginatedResponse } from "@/types";
 import axiosClient from "@/lib/axios-client";
 import { CLASS_ENDPOINTS } from "@/lib/api-routes";
 import { AxiosResponse } from "axios";
@@ -26,24 +26,24 @@ export default function ClassesPage() {
   } = useClassLevel();
 
   const { data: classesResponse, isLoading } = useQuery<
-    AxiosResponse<ClassLevel[]>
+    AxiosResponse<PaginatedResponse<ClassLevel>>
   >({
     queryKey: [queryKeys.CLASSES],
     queryFn: async () => axiosClient.get(CLASS_ENDPOINTS.GET_ALL_CLASSES),
   });
 
-  const classes = classesResponse?.data || [];
+  const classes = classesResponse?.data.data.data || [];
 
   if (isLoading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <Skeleton className="h-10 w-[200px]" />
-          <Skeleton className="h-10 w-[120px]" />
+          <Skeleton className="h-10 w-50" />
+          <Skeleton className="h-10 w-50" />
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-[200px] w-full" />
+            <Skeleton key={i} className="h-50 w-full" />
           ))}
         </div>
       </div>

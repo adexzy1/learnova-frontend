@@ -6,10 +6,12 @@ import { AxiosResponse } from "axios";
 import { Role } from "@/components/settings/roles-manager/types";
 
 export const useSelectableRoles = () => {
-  const { data: roles } = useQuery<AxiosResponse<Pick<Role, "id" | "name">[]>>({
+  const { data: roles } = useQuery<
+    AxiosResponse<{ data: Pick<Role, "id" | "name">[] }>
+  >({
     queryKey: [queryKeys.ROLES],
     queryFn: async () => axiosClient.get(ROLES_ENDPOINTS.GET_SELECTABLE_ROLES),
   });
 
-  return roles?.data;
+  return roles?.data.data || [];
 };

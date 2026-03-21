@@ -1,10 +1,30 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
+import type { AxiosResponse } from "axios";
 import { Building2, CreditCard, Users, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/shared/page-header";
+import apiClient from "@/lib/api-client";
+import { TENANT_ENDPOINTS } from "@/lib/api-routes";
+import { queryKeys } from "@/app/constants/queryKeys";
+
+interface TenantStats {
+  totalTenants: number;
+  activeSubscriptions: number;
+  totalRevenue: number;
+  pendingOnboarding: number;
+}
 
 export default function SuperAdminDashboard() {
+  const { data: statsResponse, isLoading } = useQuery<AxiosResponse<TenantStats>>({
+    queryKey: [queryKeys.SUPER_ADMIN_STATS],
+    queryFn: () => apiClient.get(TENANT_ENDPOINTS.GET_STATS),
+  });
+
+  const stats = statsResponse?.data;
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -19,20 +39,24 @@ export default function SuperAdminDashboard() {
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">+2 from last month</p>
+            {isLoading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-2xl font-bold">{stats?.totalTenants ?? 0}</div>
+            )}
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Active Subscriptions
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Active Subscriptions</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">10</div>
-            <p className="text-xs text-muted-foreground">83% conversion rate</p>
+            {isLoading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-2xl font-bold">{stats?.activeSubscriptions ?? 0}</div>
+            )}
           </CardContent>
         </Card>
         <Card>
@@ -41,22 +65,26 @@ export default function SuperAdminDashboard() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$12,450</div>
-            <p className="text-xs text-muted-foreground">
-              +15% from last month
-            </p>
+            {isLoading ? (
+              <Skeleton className="h-8 w-24" />
+            ) : (
+              <div className="text-2xl font-bold">
+                ${(stats?.totalRevenue ?? 0).toLocaleString()}
+              </div>
+            )}
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Pending Onboarding
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Pending Onboarding</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
-            <p className="text-xs text-muted-foreground">Requires approval</p>
+            {isLoading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-2xl font-bold">{stats?.pendingOnboarding ?? 0}</div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -67,28 +95,10 @@ export default function SuperAdminDashboard() {
             <CardTitle>Recent Activity</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {[
-                {
-                  desc: "New tenant 'Prestige High' created",
-                  time: "2 hours ago",
-                },
-                {
-                  desc: "Subscription renewed for 'Springfield Academy'",
-                  time: "5 hours ago",
-                },
-                { desc: "System maintenance completed", time: "1 day ago" },
-              ].map((item, i) => (
-                <div
-                  key={i}
-                  className="flex justify-between items-center border-b last:border-0 pb-2 last:pb-0"
-                >
-                  <span className="text-sm">{item.desc}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {item.time}
-                  </span>
-                </div>
-              ))}
+            <div className="flex items-center justify-center py-8">
+              <p className="text-sm text-muted-foreground">
+                Activity data will appear here.
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -97,19 +107,10 @@ export default function SuperAdminDashboard() {
             <CardTitle>System Health</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex justify-between text-sm">
-                <span>API Latency</span>
-                <span className="text-green-600 font-medium">45ms</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>Database Load</span>
-                <span className="text-green-600 font-medium">12%</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>Storage Usage</span>
-                <span className="text-yellow-600 font-medium">68%</span>
-              </div>
+            <div className="flex items-center justify-center py-8">
+              <p className="text-sm text-muted-foreground">
+                System health data will appear here.
+              </p>
             </div>
           </CardContent>
         </Card>
