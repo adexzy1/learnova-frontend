@@ -8,7 +8,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import axiosClient from "@/lib/axios-client";
+import apiClient from "@/lib/api-client";
+import type { ApiError } from "@/types";
 
 export const useNewStaffService = () => {
   const queryClient = useQueryClient();
@@ -21,44 +22,22 @@ export const useNewStaffService = () => {
       lastName: "",
       email: "",
       phone: "",
-      role: "teacher",
-      subjects: [],
-      classes: [],
+      roleId: "",
+      createUserAccount: true,
+      assignments: [],
     },
   });
 
   const mutation = useMutation({
-    mutationFn: async (data: StaffFormData) => {
-      const response = await axiosClient.post(
-        STAFF_ENDPOINTS.CREATE_STAFF,
-        data,
-      );
-      return response;
-    },
-    onSuccess: (data) => {
+    mutationFn: (data: StaffFormData) =>
+      apiClient.post(STAFF_ENDPOINTS.CREATE_STAFF, data),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [queryKeys.STAFF] });
-      toast.success("Success", {
-        description:
-          data.data.message || "Staff member registered successfully",
-      });
+      toast.success("Staff member registered successfully");
       router.push("/staff");
     },
-    onError: (error: any) => {
-      if (error?.response?.data?.errors) {
-        Object.entries(error?.response?.data?.errors).forEach(
-          ([key, value]) => {
-            form.setError(key as keyof StaffFormData, {
-              message: value as string,
-            });
-          },
-        );
-        return;
-      }
-      toast.error("Error", {
-        description:
-          error?.response?.data?.message ||
-          "Failed to register staff member",
-      });
+    onError: (error: ApiError) => {
+      toast.error(error.message ?? "Failed to register staff member");
     },
   });
 

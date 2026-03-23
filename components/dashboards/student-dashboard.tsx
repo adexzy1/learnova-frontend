@@ -69,16 +69,16 @@ export default function StudentDashboard() {
 
   // Fetch exam timetable
   const { data: timetableResponse, isLoading: loadingTimetable } = useQuery<
-    AxiosResponse<(ExamTimetable & { subjectName?: string })[]>
+    AxiosResponse<{ data: (ExamTimetable & { subjectName?: string })[] }>
   >({
-    queryKey: [queryKeys.TIMETABLE, "student-exams"],
-    queryFn: () => apiClient.get(ASSESSMENT_ENDPOINTS.TIMETABLE_GET),
+    queryKey: [queryKeys.EXAM_TIMETABLE, "student-exams"],
+    queryFn: () => apiClient.get(ASSESSMENT_ENDPOINTS.EXAM_TIMETABLE_GET),
     enabled: !!studentId,
   });
 
   const result = resultResponse?.data;
   const attendance = attendanceResponse?.data;
-  const exams = timetableResponse?.data ?? [];
+  const exams = timetableResponse?.data?.data ?? [];
 
   // Compute next exam
   const today = startOfDay(new Date());

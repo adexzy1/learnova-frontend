@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/page-header";
 import { StaffDetails } from "../_components/staff-details";
+import { SubjectAssignments } from "../_components/subject-assignments";
 import { useEditStaffService } from "../_service/useEditStaffService";
 
 export default function StaffProfilePage() {
@@ -34,7 +35,7 @@ export default function StaffProfilePage() {
     <div className="space-y-6">
       <PageHeader
         title={`${staffDetails.firstName} ${staffDetails.lastName}`}
-        description={`Staff Profile — ${staffDetails.employeeId}`}
+        description={`Staff Profile — ${staffDetails.staffNumber}`}
         breadcrumbs={[
           { label: "Dashboard", href: "/dashboard" },
           { label: "Staff", href: "/staff" },
@@ -51,6 +52,8 @@ export default function StaffProfilePage() {
       />
 
       <StaffDetails staff={staffDetails} />
+
+      <SubjectAssignments staffId={staffDetails.id} />
     </div>
   );
 }

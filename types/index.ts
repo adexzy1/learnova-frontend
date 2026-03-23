@@ -262,13 +262,10 @@ export interface Staff {
   lastName: string;
   email: string;
   phone: string;
-  role: UserRole[];
-  department?: string;
-  subjects?: string[];
-  classes?: string[];
-  hireDate: string;
-  status: "active" | "inactive" | "on-leave";
-  photo?: string;
+  isActive: boolean;
+  roles: UserRole[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface LeaveRequest {
@@ -305,11 +302,25 @@ export interface ExamTimetable {
   id: string;
   termId: string;
   subjectId: string;
+  subjectName?: string;
   classId: string;
+  className?: string;
   date: string;
   startTime: string;
   endTime: string;
-  venue: string;
+  venue: string | null;
+}
+
+export interface Examination {
+  id: string;
+  name: string;
+  sessionId: string;
+  termId: string;
+  startDate: string;
+  endDate: string;
+  status: "scheduled" | "ongoing" | "completed";
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ExamScore {
@@ -392,9 +403,9 @@ export interface Invoice {
   termId: string;
   items: InvoiceItem[];
   totalAmount: number;
-  paidAmount: number;
+  amountPaid: number;
   balance: number;
-  status: "unpaid" | "partial" | "paid" | "overdue";
+  status: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
   dueDate: string;
   createdAt: string;
 }
@@ -417,13 +428,14 @@ export interface Payment {
 
 export interface LedgerEntry {
   id: string;
-  date: string;
-  description: string;
-  type: "credit" | "debit";
+  entryType: "INCOME" | "EXPENSE";
+  sourceType: string;
+  sourceId: string;
   amount: number;
-  balance: number;
+  description: string;
   category: string;
   reference: string;
+  occurredAt: string;
 }
 
 // Attendance Types
@@ -498,11 +510,10 @@ export interface PaginatedResponse<T> {
     meta: {
       total: number;
       page: number;
-      pageSize: number;
-      totalPages: number;
-      lastPage: number;
+      limit: number;
+      pageCount: number;
+      hasPreviousPage: boolean;
       hasNextPage: boolean;
-      hasPrevPage: boolean;
     };
   };
 }
@@ -542,12 +553,40 @@ export interface FeeStructure {
   name: string;
   description: string;
   amount: number;
-  applicableClasses: string[]; // classLevel IDs; empty = all classes
-  termId: string;
+  applicableClassIds: string[];
+  applicableClasses: string[]; // resolved class names from backend
+  termId: string | null;
   isActive: boolean;
 }
 
 // ─── Subject-Teacher-Class Assignment ───────────────────────────────
+export interface SubjectTeacherAssignment {
+  id: string;
+  classArmId: string;
+  subjectId: string;
+  staffId: string;
+  classArm: {
+    id: string;
+    name: string;
+    class: {
+      id: string;
+      name: string;
+    };
+  };
+  subject: {
+    id: string;
+    name: string;
+    code?: string;
+  };
+  staff?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+  createdAt: string;
+}
+
+/** @deprecated Use SubjectTeacherAssignment instead */
 export interface SubjectAssignment {
   id: string;
   subjectId: string;

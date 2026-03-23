@@ -1,15 +1,15 @@
 "use client";
 
-import { useForm } from "react-hook-form";
-import { Check, ChevronsUpDown, X } from "lucide-react";
-import { useState } from "react";
+import { useForm, useFieldArray } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
+import { Plus, Trash2 } from "lucide-react";
 import { AxiosResponse } from "axios";
 
 import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -23,27 +23,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { cn } from "@/lib/utils";
 import { StaffFormData } from "@/schemas";
-import { queryKeys } from "@/app/constants/queryKeys";
-import { SUBJECT_ENDPOINTS, CLASS_ENDPOINTS } from "@/lib/api-routes";
+import { useSelectableRoles } from "@/shared/service/useSelectableRoles";
 import axiosClient from "@/lib/axios-client";
-import { Subject, ClassArm } from "@/types";
+import { CLASS_ENDPOINTS, SUBJECT_ENDPOINTS } from "@/lib/api-routes";
+import { queryKeys } from "@/app/constants/queryKeys";
 
 interface StaffFormProps {
   onSubmit: (data: StaffFormData) => void;
@@ -51,6 +37,7 @@ interface StaffFormProps {
   title: string;
   form: ReturnType<typeof useForm<StaffFormData>>;
   submitLabel?: string;
+  isEdit?: boolean;
 }
 
 export function StaffForm({
@@ -59,66 +46,34 @@ export function StaffForm({
   title,
   form,
   submitLabel = "Save Staff",
+  isEdit = false,
 }: StaffFormProps) {
-  const [subjectsOpen, setSubjectsOpen] = useState(false);
-  const [classesOpen, setClassesOpen] = useState(false);
+  const roles = useSelectableRoles();
 
-  const selectedSubjects = form.watch("subjects") || [];
-  const selectedClasses = form.watch("classes") || [];
-
-  // Fetch subjects from API
-  const { data: subjectsData } = useQuery<AxiosResponse<{ data: Subject[] }>>({
-    queryKey: [queryKeys.SUBJECTS],
-    queryFn: async () =>
-      axiosClient.get(SUBJECT_ENDPOINTS.GET_SELECTABLE_SUBJECTS),
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "assignments",
   });
 
-  // Fetch class arms from API
-  const { data: classesData } = useQuery<
-    AxiosResponse<{ data: Pick<ClassArm, "id" | "name">[] }>
+  // Fetch class arms
+  const { data: classArmsRes } = useQuery<
+    AxiosResponse<{ data: { id: string; name: string }[] }>
   >({
-    queryKey: [queryKeys.CLASSES],
-    queryFn: async () => axiosClient.get(CLASS_ENDPOINTS.GET_ALL_CLASS_ARMS),
+    queryKey: [queryKeys.CLASS_ARMS],
+    queryFn: () => axiosClient.get(CLASS_ENDPOINTS.GET_ALL_CLASS_ARMS),
   });
 
-  const subjects = subjectsData?.data.data || [];
-  const classArms = classesData?.data.data || [];
+  const classArms = classArmsRes?.data?.data || [];
 
-  const toggleSubject = (subjectName: string) => {
-    const current = [...selectedSubjects];
-    const index = current.indexOf(subjectName);
-    if (index >= 0) {
-      current.splice(index, 1);
-    } else {
-      current.push(subjectName);
-    }
-    form.setValue("subjects", current);
-  };
+  // Fetch subjects
+  const { data: subjectsRes } = useQuery<
+    AxiosResponse<{ data: { id: string; name: string }[] }>
+  >({
+    queryKey: [queryKeys.SELECTABLE_SUBJECTS],
+    queryFn: () => axiosClient.get(SUBJECT_ENDPOINTS.GET_SELECTABLE_SUBJECTS),
+  });
 
-  const removeSubject = (subjectName: string) => {
-    form.setValue(
-      "subjects",
-      selectedSubjects.filter((s) => s !== subjectName),
-    );
-  };
-
-  const toggleClass = (className: string) => {
-    const current = [...selectedClasses];
-    const index = current.indexOf(className);
-    if (index >= 0) {
-      current.splice(index, 1);
-    } else {
-      current.push(className);
-    }
-    form.setValue("classes", current);
-  };
-
-  const removeClass = (className: string) => {
-    form.setValue(
-      "classes",
-      selectedClasses.filter((c) => c !== className),
-    );
-  };
+  const subjects = subjectsRes?.data?.data || [];
 
   return (
     <Form {...form}>
@@ -176,64 +131,34 @@ export function StaffForm({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email Address</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="sarah@school.com"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="+234..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email Address</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="sarah@school.com"
+                        disabled={isEdit}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
-                name="role"
+                name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Role</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a role" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="teacher">Teacher</SelectItem>
-                        <SelectItem value="school-admin">
-                          School Admin
-                        </SelectItem>
-                        <SelectItem value="finance-officer">
-                          Finance Officer
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Phone Number</FormLabel>
+                    <FormControl>
+                      <Input placeholder="+234..." {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -241,153 +166,177 @@ export function StaffForm({
             </CardContent>
           </Card>
 
-          {/* Teaching Information */}
-          <div className="space-y-6">
-            {/* Subjects Combobox */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Assigned Subjects</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Popover open={subjectsOpen} onOpenChange={setSubjectsOpen}>
-                  <PopoverTrigger asChild className="w-full">
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={subjectsOpen}
-                      className="w-full justify-between font-normal"
+          {/* Role & Account */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Role & Account</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="roleId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Role</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
                     >
-                      {selectedSubjects.length > 0
-                        ? `${selectedSubjects.length} subject(s) selected`
-                        : "Select subjects..."}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0" align="start">
-                    <Command>
-                      <CommandInput placeholder="Search subjects..." />
-                      <CommandList>
-                        <CommandEmpty>No subjects found.</CommandEmpty>
-                        <CommandGroup>
-                          {subjects.map((subject) => (
-                            <CommandItem
-                              key={subject.id}
-                              value={subject.name}
-                              onSelect={() => toggleSubject(subject.name)}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  selectedSubjects.includes(subject.name)
-                                    ? "opacity-100"
-                                    : "opacity-0",
-                                )}
-                              />
-                              {subject.name}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-
-                {selectedSubjects.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {selectedSubjects.map((subject, i) => (
-                      <Badge key={i} variant="secondary" className="gap-1 pr-1">
-                        {subject}
-                        <button
-                          type="button"
-                          onClick={() => removeSubject(subject)}
-                          className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No subjects assigned yet.
-                  </p>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a role" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {roles.map((role) => (
+                          <SelectItem key={role.id} value={role.id}>
+                            {role.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      The role determines what permissions this staff member will
+                      have in the system.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </CardContent>
-            </Card>
+              />
 
-            {/* Classes Combobox */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Assigned Classes</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Popover open={classesOpen} onOpenChange={setClassesOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={classesOpen}
-                      className="w-full justify-between font-normal"
-                    >
-                      {selectedClasses.length > 0
-                        ? `${selectedClasses.length} class(es) selected`
-                        : "Select classes..."}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-full p-0" align="start">
-                    <Command>
-                      <CommandInput placeholder="Search classes..." />
-                      <CommandList>
-                        <CommandEmpty>No classes found.</CommandEmpty>
-                        <CommandGroup>
-                          {classArms.map((cls) => (
-                            <CommandItem
-                              key={cls.id}
-                              value={cls.name}
-                              onSelect={() => toggleClass(cls.name)}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  selectedClasses.includes(cls.name)
-                                    ? "opacity-100"
-                                    : "opacity-0",
-                                )}
-                              />
-                              {cls.name}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-
-                {selectedClasses.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {selectedClasses.map((cls, i) => (
-                      <Badge key={i} variant="outline" className="gap-1 pr-1">
-                        {cls}
-                        <button
-                          type="button"
-                          onClick={() => removeClass(cls)}
-                          className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No classes assigned yet.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+              {!isEdit && (
+                <FormField
+                  control={form.control}
+                  name="createUserAccount"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                          Create Login Account
+                        </FormLabel>
+                        <FormDescription>
+                          Allow this staff member to log in to the system. Turn
+                          off if you only need a staff profile.
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              )}
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Class & Subject Assignments */}
+        {!isEdit && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Class & Subject Assignments</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Assign this staff member to teach subjects in specific classes.
+                  You can also do this later from the staff profile.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => append({ classArmId: "", subjectId: "" })}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {fields.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground py-6">
+                  No assignments added. Click &quot;Add&quot; to assign classes
+                  and subjects.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {fields.map((field, index) => (
+                    <div
+                      key={field.id}
+                      className="flex items-start gap-3"
+                    >
+                      <FormField
+                        control={form.control}
+                        name={`assignments.${index}.classArmId`}
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            {index === 0 && <FormLabel>Class</FormLabel>}
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select class" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {classArms.map((arm) => (
+                                  <SelectItem key={arm.id} value={arm.id}>
+                                    {arm.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`assignments.${index}.subjectId`}
+                        render={({ field }) => (
+                          <FormItem className="flex-1">
+                            {index === 0 && <FormLabel>Subject</FormLabel>}
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select subject" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {subjects.map((sub) => (
+                                  <SelectItem key={sub.id} value={sub.id}>
+                                    {sub.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className={`h-9 w-9 text-destructive hover:text-destructive ${index === 0 ? "mt-8" : ""}`}
+                        onClick={() => remove(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </form>
     </Form>
   );

@@ -8,9 +8,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useParams, useRouter } from "next/navigation";
-import axiosClient from "@/lib/axios-client";
-import { AxiosResponse } from "axios";
-import { Staff } from "@/types";
+import apiClient from "@/lib/api-client";
+import type { AxiosResponse } from "axios";
+import type { ApiError, Staff } from "@/types";
 import { useEffect } from "react";
 
 export const useEditStaffService = (staffId?: string) => {
@@ -19,14 +19,16 @@ export const useEditStaffService = (staffId?: string) => {
   const params = useParams();
   const id = staffId || (params.id as string);
 
-  const { data: staffDetails, isLoading: isLoadingDetails } = useQuery<
-    AxiosResponse<Staff>
+  const { data: staffResponse, isLoading: isLoadingDetails } = useQuery<
+    AxiosResponse<{ data: Staff }>
   >({
     queryKey: [queryKeys.STAFF, id],
-    queryFn: async () =>
-      axiosClient.get(STAFF_ENDPOINTS.GET_STAFF_BY_ID.replace(":id", id)),
+    queryFn: () =>
+      apiClient.get(STAFF_ENDPOINTS.GET_STAFF_BY_ID.replace(":id", id)),
     enabled: !!id,
   });
+
+  const staffDetails = staffResponse?.data?.data ?? null;
 
   const form = useForm<StaffFormData>({
     resolver: zodResolver(staffSchema),
@@ -35,55 +37,44 @@ export const useEditStaffService = (staffId?: string) => {
       lastName: "",
       email: "",
       phone: "",
-      role: "teacher",
-      subjects: [],
-      classes: [],
+      roleId: "",
+      createUserAccount: true,
+      assignments: [],
     },
   });
 
   // Sync form with fetched data
   useEffect(() => {
-    if (staffDetails?.data) {
-      const staff = staffDetails.data;
+    if (staffDetails) {
       form.reset({
-        firstName: staff.firstName,
-        lastName: staff.lastName,
-        email: staff.email,
-        phone: staff.phone,
-        role: staff.role as "school-admin" | "teacher" | "finance-officer",
-        subjects: staff.subjects || [],
-        classes: staff.classes || [],
+        firstName: staffDetails.firstName,
+        lastName: staffDetails.lastName,
+        email: staffDetails.email,
+        phone: staffDetails.phone ?? "",
+        roleId: staffDetails.roles?.[0]?.role?.id ?? "",
       });
     }
   }, [staffDetails, form]);
 
   const mutation = useMutation({
-    mutationFn: async (data: StaffFormData) => {
-      const response = await axiosClient.patch(
+    mutationFn: (data: StaffFormData) =>
+      apiClient.patch(
         STAFF_ENDPOINTS.UPDATE_STAFF.replace(":id", id),
         data,
-      );
-      return response.data;
-    },
-    onSuccess: (data) => {
+      ),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [queryKeys.STAFF] });
       queryClient.invalidateQueries({ queryKey: [queryKeys.STAFF, id] });
-      toast.success("Success", {
-        description:
-          data.message || "Staff profile updated successfully",
-      });
+      toast.success("Staff profile updated successfully");
       router.push(`/staff/${id}`);
     },
-    onError: (error: any) => {
-      toast.error("Error", {
-        description:
-          error?.response?.data?.message || "Failed to update profile",
-      });
+    onError: (error: ApiError) => {
+      toast.error(error.message ?? "Failed to update profile");
     },
   });
 
   return {
-    staffDetails: staffDetails?.data,
+    staffDetails,
     isLoadingDetails,
     form,
     mutation,

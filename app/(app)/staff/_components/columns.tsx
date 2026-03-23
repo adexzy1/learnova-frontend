@@ -6,7 +6,7 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,36 +15,6 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Staff, UserRole } from "@/types";
-
-function getStatusBadge(status: Staff["status"]) {
-  switch (status) {
-    case "active":
-      return (
-        <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
-          Active
-        </Badge>
-      );
-    case "inactive":
-      return <Badge variant="secondary">Inactive</Badge>;
-    case "on-leave":
-      return (
-        <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
-          On Leave
-        </Badge>
-      );
-    default:
-      return <Badge variant="outline">{status}</Badge>;
-  }
-}
-
-function getRoleBadge(roleName: string) {
-  const key = (roleName || "").toLowerCase().replace(/\s+/g, "-");
-  return (
-    <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
-      {roleName}
-    </Badge>
-  );
-}
 
 export const getColumns = (
   handleDeactivate: (staff: Staff) => void,
@@ -64,10 +34,6 @@ export const getColumns = (
       return (
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8">
-            <AvatarImage
-              src={staff.photo || `/placeholder.svg`}
-              alt={staff.firstName}
-            />
             <AvatarFallback>
               {staff.firstName.charAt(0)}
               {staff.lastName.charAt(0)}
@@ -91,16 +57,30 @@ export const getColumns = (
       return (
         <div className="flex flex-wrap items-center gap-2">
           {roles.map((r) => (
-            <span key={r.id}>{getRoleBadge(r.role?.name ?? "")}</span>
+            <Badge
+              key={r.id}
+              className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400"
+            >
+              {r.role?.name ?? ""}
+            </Badge>
           ))}
         </div>
       );
     },
   },
   {
-    accessorKey: "status",
+    accessorKey: "isActive",
     header: "Status",
-    cell: ({ row }) => getStatusBadge(row.getValue("status")),
+    cell: ({ row }) => {
+      const isActive = row.getValue("isActive") as boolean;
+      return isActive ? (
+        <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
+          Active
+        </Badge>
+      ) : (
+        <Badge variant="secondary">Inactive</Badge>
+      );
+    },
   },
   {
     id: "actions",
@@ -127,7 +107,7 @@ export const getColumns = (
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            {staff.status === "active" && (
+            {staff.isActive && (
               <DropdownMenuItem
                 onClick={() => handleDeactivate(staff)}
                 className="text-destructive"

@@ -9,17 +9,20 @@ import type { AxiosResponse } from "axios";
 export interface FeeStructurePayload {
   name: string;
   description?: string;
-  applicableClasses: string[];
+  applicableClassIds: string[];
   amount: number;
+  termId?: string;
   isActive: boolean;
 }
 
 const useFeeStructureService = () => {
   const queryClient = useQueryClient();
 
-  const { data: response, isLoading, error } = useQuery<
-    AxiosResponse<FeeStructure[]>
-  >({
+  const {
+    data: response,
+    isLoading,
+    error,
+  } = useQuery<AxiosResponse<{ data: FeeStructure[] }>>({
     queryKey: [queryKeys.FEE_STRUCTURES],
     queryFn: () => apiClient.get(FINANCE_ENDPOINTS.FEE_STRUCTURES_GET_ALL),
   });
@@ -65,7 +68,7 @@ const useFeeStructureService = () => {
     },
   });
 
-  const feeStructures = response?.data ?? [];
+  const feeStructures = response?.data.data ?? [];
 
   return {
     feeStructures,

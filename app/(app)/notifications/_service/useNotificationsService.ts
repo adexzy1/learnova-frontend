@@ -10,13 +10,14 @@ export default function useNotificationsService() {
   const queryClient = useQueryClient();
 
   const { data: notificationsResponse, isLoading } = useQuery<
-    AxiosResponse<Notification[]>
+    AxiosResponse<{ data: Notification[] }>
   >({
     queryKey: [queryKeys.NOTIFICATIONS],
     queryFn: () => apiClient.get(NOTIFICATIONS_ENDPOINTS.GET_ALL),
+    refetchInterval: 30_000,
   });
 
-  const notifications = notificationsResponse?.data ?? [];
+  const notifications = notificationsResponse?.data?.data ?? [];
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const markReadMutation = useMutation({

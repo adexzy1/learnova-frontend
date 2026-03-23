@@ -7,7 +7,7 @@ import { ASSESSMENT_ENDPOINTS } from "@/lib/api-routes";
 import { queryKeys } from "@/app/constants/queryKeys";
 import { useAuth } from "@/providers/app-auth-provider";
 import { PageHeader } from "@/components/shared/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { format, isBefore, startOfDay } from "date-fns";
@@ -33,14 +33,14 @@ export default function StudentExamsPage() {
   const { user } = useAuth();
 
   const { data: timetableResponse, isLoading } = useQuery<
-    AxiosResponse<ExamTimetableEntry[]>
+    AxiosResponse<{ data: ExamTimetableEntry[] }>
   >({
-    queryKey: [queryKeys.TIMETABLE, "student-exams"],
-    queryFn: () => apiClient.get(ASSESSMENT_ENDPOINTS.TIMETABLE_GET),
+    queryKey: [queryKeys.EXAM_TIMETABLE, "student-exams"],
+    queryFn: () => apiClient.get(ASSESSMENT_ENDPOINTS.EXAM_TIMETABLE_GET),
     enabled: !!user?.id,
   });
 
-  const entries = timetableResponse?.data ?? [];
+  const entries = timetableResponse?.data?.data ?? [];
   const today = startOfDay(new Date());
 
   // Sort by date ascending

@@ -2,7 +2,6 @@
 
 import React from "react";
 
-import { useQuery } from "@tanstack/react-query";
 import {
   Users,
   GraduationCap,
@@ -15,23 +14,17 @@ import {
   ArrowDownRight,
 } from "lucide-react";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-// import { useAuth } from "@/providers/auth-provider";
-// import { useTenant } from "@/providers/tenant-provider";
-import { fetchDashboardStats, type DashboardStats } from "@/lib/api";
 import { formatCurrency, formatNumber } from "@/lib/format";
 import { DashboardCharts } from "@/features/dashboard/dashboard-charts";
 import { RecentActivity } from "@/features/dashboard/recent-activity";
 import { QuickActions } from "@/features/dashboard/quick-actions";
-import { useAuth } from "@/providers/app-auth-provider";
+import {
+  useDashboardService,
+  type TrendData,
+} from "@/features/dashboard/use-dashboard-service";
 
 function StatCard({
   title,
@@ -99,62 +92,103 @@ function StatCard({
   );
 }
 
-export default function TenantDashboard() {
-  const { user } = useAuth();
-  console.log(user);
-  // const { user } = useAuth()
-  // const { tenant } = useTenant()
+function getTrend(data: TrendData | null | undefined): {
+  trend?: "up" | "down";
+  trendValue?: string;
+} {
+  if (!data || data.percentage === 0) return {};
+  return {
+    trend: data.percentage > 0 ? "up" : "down",
+    trendValue: `${data.percentage > 0 ? "+" : ""}${data.percentage}%`,
+  };
+}
 
-  const { data: stats, isLoading } = useQuery<DashboardStats>({
-    queryKey: ["dashboard-stats"],
-    queryFn: fetchDashboardStats,
-  });
+export default function TenantDashboard() {
+  const {
+    people,
+    attendance,
+    academic,
+    classes,
+    financeSummary,
+    revenue,
+    payments,
+    upcomingExams,
+  } = useDashboardService();
+
+  const peopleData = people.data?.data.data;
+  const attendanceData = attendance.data?.data.data;
+  const academicData = academic.data?.data.data;
+  const classesData = classes.data?.data.data;
+  const financeData = financeSummary.data?.data.data;
+  const revenueData = revenue.data?.data.data;
+  const paymentsData = payments.data?.data.data;
+  const examsData = upcomingExams.data?.data.data;
+
+  // Debug: log errors and data for diagnosis
+  if (process.env.NODE_ENV === "development") {
+    const errors = {
+      people: people.error,
+      attendance: attendance.error,
+      academic: academic.error,
+      classes: classes.error,
+      financeSummary: financeSummary.error,
+      revenue: revenue.error,
+      payments: payments.error,
+      upcomingExams: upcomingExams.error,
+    };
+    const hasErrors = Object.values(errors).some(Boolean);
+    if (hasErrors) {
+      console.error("[Dashboard] Query errors:", errors);
+    }
+  }
+
+  // Map payments to activity format
+  const activities = (paymentsData?.payments ?? []).map((p) => ({
+    id: p.id,
+    type: "payment",
+    description: `${p.studentFirstName} ${p.studentLastName} — ${formatCurrency(p.amount)}`,
+    timestamp: p.paidAt,
+  }));
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      {/* <div className="flex flex-col gap-2">
-        <h1 className="text-2xl lg:text-3xl font-bold tracking-tight">
-          Welcome back, {user?.firstName}
-        </h1>
-        <p className="text-muted-foreground">
-          Here's what's happening at {tenant.schoolName} today.
-        </p>
-      </div> */}
-
       {/* Quick Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total Students"
-          value={formatNumber(stats?.totalStudents || 0)}
+          value={formatNumber(peopleData?.activeStudents ?? 0)}
           description="enrolled students"
           icon={GraduationCap}
-          trend="up"
-          trendValue="+12%"
-          isLoading={isLoading}
+          {...getTrend(peopleData?.studentsTrend)}
+          isLoading={people.isLoading}
         />
         <StatCard
           title="Total Staff"
-          value={formatNumber(stats?.totalStaff || 0)}
+          value={formatNumber(peopleData?.activeStaff ?? 0)}
           description="active staff members"
           icon={Users}
-          isLoading={isLoading}
+          {...getTrend(peopleData?.staffTrend)}
+          isLoading={people.isLoading}
         />
         <StatCard
           title="Attendance Rate"
-          value={`${stats?.attendanceRate || 0}%`}
-          description="this week"
+          value={
+            attendanceData?.attendanceRate != null
+              ? `${(attendanceData.attendanceRate * 100).toFixed(1)}%`
+              : "—"
+          }
+          description="this term"
           icon={Calendar}
-          trend="up"
-          trendValue="+2.5%"
-          isLoading={isLoading}
+          {...getTrend(attendanceData?.attendanceTrend)}
+          isLoading={attendance.isLoading}
         />
         <StatCard
-          title="Revenue Collected"
-          value={formatCurrency(stats?.revenueCollected || 0)}
-          description={`${stats?.pendingInvoices || 0} pending invoices`}
+          title="Outstanding Balance"
+          value={formatCurrency(financeData?.outstandingBalance ?? 0)}
+          description={`${financeData?.overdueInvoiceCount ?? 0} overdue invoices`}
           icon={CreditCard}
-          isLoading={isLoading}
+          {...getTrend(financeData?.balanceTrend)}
+          isLoading={financeSummary.isLoading}
         />
       </div>
 
@@ -164,30 +198,32 @@ export default function TenantDashboard() {
       {/* Charts and Activity */}
       <div className="grid gap-6 lg:grid-cols-7">
         <div className="lg:col-span-4">
-          <DashboardCharts />
+          <DashboardCharts
+            attendanceChart={attendanceData?.weeklyChart}
+            revenueChart={revenueData?.revenueChart}
+            gradeDistribution={academicData?.gradeDistribution}
+            attendanceLoading={attendance.isLoading}
+            revenueLoading={revenue.isLoading}
+            academicLoading={academic.isLoading}
+          />
         </div>
         <div className="lg:col-span-3">
           <RecentActivity
-            activities={stats?.recentActivities || []}
-            isLoading={isLoading}
+            activities={activities}
+            isLoading={payments.isLoading}
           />
         </div>
       </div>
 
       {/* Additional Stats Row */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Active Classes
-            </CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalClasses || 0}</div>
-            <p className="text-xs text-muted-foreground">across all levels</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Active Classes"
+          value={classesData?.totalClassArms ?? 0}
+          description={`${classesData?.totalClasses ?? 0} class levels`}
+          icon={BookOpen}
+          isLoading={classes.isLoading}
+        />
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -197,10 +233,19 @@ export default function TenantDashboard() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {stats?.upcomingExams || 0}
-            </div>
-            <p className="text-xs text-muted-foreground">scheduled this term</p>
+            {upcomingExams.isLoading ? (
+              <>
+                <Skeleton className="h-8 w-32 mb-2" />
+                <Skeleton className="h-3 w-20" />
+              </>
+            ) : (
+              <>
+                <div className="text-2xl font-bold">
+                  {examsData?.count ?? 0}
+                </div>
+                <p className="text-xs text-muted-foreground">in next 14 days</p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -212,13 +257,37 @@ export default function TenantDashboard() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2">
-              <div className="text-2xl font-bold">78%</div>
-              <Badge variant="secondary" className="text-green-600">
-                +5%
-              </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground">avg. pass rate</p>
+            {academic.isLoading ? (
+              <>
+                <Skeleton className="h-8 w-32 mb-2" />
+                <Skeleton className="h-3 w-20" />
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="text-2xl font-bold">
+                    {academicData?.passRate != null
+                      ? `${(academicData.passRate * 100).toFixed(1)}%`
+                      : "—"}
+                  </div>
+                  {academicData?.passRateTrend &&
+                    academicData.passRateTrend.percentage !== 0 && (
+                      <Badge
+                        variant="secondary"
+                        className={
+                          academicData.passRateTrend.percentage > 0
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }
+                      >
+                        {academicData.passRateTrend.percentage > 0 ? "+" : ""}
+                        {academicData.passRateTrend.percentage}%
+                      </Badge>
+                    )}
+                </div>
+                <p className="text-xs text-muted-foreground">avg. pass rate</p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>

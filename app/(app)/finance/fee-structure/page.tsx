@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Landmark } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/shared/page-header";
 
@@ -36,16 +36,44 @@ export default function FeeStructurePage() {
       />
 
       <Card>
-        <CardContent className="pt-6">
+        <CardHeader>
+          <CardTitle>Fee Structures</CardTitle>
+          <CardDescription>
+            {feeStructures.length > 0
+              ? `${feeStructures.length} fee structure${feeStructures.length > 1 ? "s" : ""} configured`
+              : "Configure the fees applicable to your students"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
           {error ? (
-            <p className="text-sm text-destructive py-4 text-center">
-              Failed to load fee structures. Please try again.
-            </p>
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-sm text-destructive">
+                Failed to load fee structures. Please try again.
+              </p>
+            </div>
           ) : isLoading ? (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-10 w-full" />
+                <Skeleton key={i} className="h-12 w-full" />
               ))}
+            </div>
+          ) : feeStructures.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
+                <Landmark className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <p className="text-sm font-medium">No fee structures yet</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Add your first fee structure to start billing students
+              </p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => setDialogOpen(true)}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add Fee Structure
+              </Button>
             </div>
           ) : (
             <FeeStructureTable

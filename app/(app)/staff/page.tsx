@@ -15,7 +15,6 @@ import {
 import { PageHeader } from "@/components/shared/page-header";
 import { DataTable } from "@/components/shared/table/data-table";
 import { DataTableToolbar } from "@/components/shared/table/data-table-toolbar";
-import { DataTableSearch } from "@/components/shared/table/data-table-search";
 import { DataTablePagination } from "@/components/shared/table/pagination";
 
 import useStaffService from "./_service/useStaffService";
@@ -117,13 +116,13 @@ export default function StaffPage() {
       <DataTablePagination
         page={pagination.page}
         pageSize={pagination.per_page}
-        totalPages={meta?.lastPage || 0}
+        totalPages={meta?.pageCount || 0}
         hasNextPage={meta?.hasNextPage || false}
-        hasPrevPage={meta?.hasPrevPage || false}
-        onPaginationChange={(pagination) =>
+        hasPrevPage={meta?.hasPreviousPage || false}
+        onPaginationChange={(p) =>
           setPagination({
-            page: pagination.page,
-            per_page: pagination.pageSize,
+            page: p.page,
+            per_page: p.pageSize,
           })
         }
       />

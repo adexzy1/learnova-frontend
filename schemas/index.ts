@@ -189,14 +189,19 @@ export const attendanceSchema = z.object({
 export type AttendanceFormData = z.infer<typeof attendanceSchema>;
 
 // Staff Schemas
+export const staffAssignmentSchema = z.object({
+  classArmId: z.string().min(1, "Class is required"),
+  subjectId: z.string().min(1, "Subject is required"),
+});
+
 export const staffSchema = z.object({
   firstName: z.string().min(2, "First name is required"),
   lastName: z.string().min(2, "Last name is required"),
   email: z.string().email("Invalid email"),
-  phone: z.string().min(10, "Phone number is required"),
-  role: z.enum(["school-admin", "teacher", "finance-officer"]),
-  subjects: z.array(z.string()).optional(),
-  classes: z.array(z.string()).optional(),
+  phone: z.string().optional(),
+  roleId: z.string().min(1, "Role is required"),
+  createUserAccount: z.boolean().default(true),
+  assignments: z.array(staffAssignmentSchema).optional().default([]),
 });
 
 export type StaffFormData = z.infer<typeof staffSchema>;

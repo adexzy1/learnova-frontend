@@ -127,3 +127,46 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ── Print styles for timetable ─────────────────────────────────── */
+@media print {
+  /* Hide everything except the printable timetable */
+  body * {
+    visibility: hidden;
+  }
+  #printable-timetable,
+  #printable-timetable * {
+    visibility: visible;
+  }
+  #printable-timetable {
+    position: absolute;
+    inset: 0;
+    border: none;
+    box-shadow: none;
+    margin: 0;
+    padding: 1rem;
+  }
+
+  /* Clean table styling for print */
+  #printable-timetable table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11pt;
+  }
+  #printable-timetable th,
+  #printable-timetable td {
+    border: 1px solid #333 !important;
+    padding: 6px 8px;
+  }
+  #printable-timetable th {
+    background-color: #f0f0f0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Force landscape for wider timetable */
+  @page {
+    size: landscape;
+    margin: 1cm;
+  }
+}

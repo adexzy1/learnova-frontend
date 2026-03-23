@@ -1,11 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import {
   Plus,
   MoreHorizontal,
   FileText,
-  Download,
-  Mail,
+  Search,
+  DollarSign,
+  AlertCircle,
+  CheckCircle2,
+  Receipt,
+  Trash2,
+  Eye,
+  CreditCard,
+  Printer,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -42,25 +50,111 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { PageHeader } from "@/components/shared/page-header";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/lib/format";
 import useInvoicesService from "./_service/useInvoicesService";
+import { GenerateInvoicesDialog } from "./_components/GenerateInvoicesDialog";
+import { InvoiceDetailDialog } from "./_components/InvoiceDetailDialog";
+import { RecordPaymentDialog } from "./_components/RecordPaymentDialog";
+import type { Invoice } from "@/types";
+
+function getStatusBadge(status: string) {
+  switch (status) {
+    case "PAID":
+      return (
+        <Badge className="bg-green-50 text-green-700 border-green-200 hover:bg-green-50 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">
+          Paid
+        </Badge>
+      );
+    case "PARTIAL":
+      return (
+        <Badge className="bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-50 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800">
+          Partial
+        </Badge>
+      );
+    case "OVERDUE":
+      return (
+        <Badge className="bg-red-50 text-red-700 border-red-200 hover:bg-red-50 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800">
+          Overdue
+        </Badge>
+      );
+    case "UNPAID":
+      return (
+        <Badge className="bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-50 dark:bg-slate-900/30 dark:text-slate-400 dark:border-slate-700">
+          Unpaid
+        </Badge>
+      );
+    default:
+      return <Badge variant="outline">{status}</Badge>;
+  }
+}
 
 export default function InvoicesPage() {
-  const { invoices, isLoading, filters, setFilters, createMutation, stats } =
-    useInvoicesService();
+  const {
+    invoices,
+    isLoading,
+    isStatsLoading,
+    filters,
+    setFilters,
+    generateMutation,
+    deleteMutation,
+    recordPaymentMutation,
+    fetchInvoiceById,
+    stats,
+  } = useInvoicesService();
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "paid":
-        return "bg-green-500 hover:bg-green-600";
-      case "partial":
-        return "bg-yellow-500 hover:bg-yellow-600";
-      case "overdue":
-        return "bg-red-500 hover:bg-red-600";
-      default:
-        return "bg-slate-500 hover:bg-slate-600";
+  const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
+  const [deleteInvoiceId, setDeleteInvoiceId] = useState<string | null>(null);
+
+  // Invoice detail modal state
+  const [detailInvoice, setDetailInvoice] = useState<Invoice | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  // Record payment modal state
+  const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null);
+  const [paymentOpen, setPaymentOpen] = useState(false);
+
+  const handleViewDetails = async (invoice: Invoice) => {
+    setDetailOpen(true);
+    setDetailLoading(true);
+    const full = await fetchInvoiceById(invoice.id);
+    if (full) {
+      setDetailInvoice({
+        ...full,
+        studentName: invoice.studentName,
+      });
+    } else {
+      setDetailOpen(false);
+    }
+    setDetailLoading(false);
+  };
+
+  const handleRecordPayment = (invoice: Invoice) => {
+    setPaymentInvoice(invoice);
+    setPaymentOpen(true);
+  };
+
+  const handlePrintInvoice = async (invoice: Invoice) => {
+    const full = await fetchInvoiceById(invoice.id);
+    if (full) {
+      setDetailInvoice({
+        ...full,
+        studentName: invoice.studentName,
+      });
+      setDetailOpen(true);
     }
   };
 
@@ -75,79 +169,156 @@ export default function InvoicesPage() {
           { label: "Invoices" },
         ]}
         actions={
-          <Button
-            onClick={() => createMutation.mutate({
-              studentId: "",
-              termId: "",
-              dueDate: "",
-              items: [],
-            })}
-            disabled
-          >
+          <Button onClick={() => setGenerateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            Create Invoice
+            Generate Invoices
           </Button>
         }
       />
 
+      <GenerateInvoicesDialog
+        open={generateDialogOpen}
+        onOpenChange={setGenerateDialogOpen}
+        generateMutation={generateMutation}
+      />
+
+      <InvoiceDetailDialog
+        invoice={detailInvoice}
+        open={detailOpen}
+        onOpenChange={(open) => {
+          setDetailOpen(open);
+          if (!open) setDetailInvoice(null);
+        }}
+        isLoading={detailLoading}
+      />
+
+      <RecordPaymentDialog
+        invoice={paymentInvoice}
+        open={paymentOpen}
+        onOpenChange={(open) => {
+          setPaymentOpen(open);
+          if (!open) setPaymentInvoice(null);
+        }}
+        paymentMutation={recordPaymentMutation}
+      />
+
+      {/* Delete Confirmation */}
+      <AlertDialog
+        open={!!deleteInvoiceId}
+        onOpenChange={(open) => !open && setDeleteInvoiceId(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Invoice</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this invoice? This action cannot be
+              undone. Invoices with recorded payments cannot be deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (deleteInvoiceId) {
+                  deleteMutation.mutate(deleteInvoiceId);
+                  setDeleteInvoiceId(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <span className="text-2xl font-bold">
-              {formatCurrency(stats.totalRevenue)}
-            </span>
-          </CardHeader>
           <CardContent>
-            <div className="text-xs text-muted-foreground">
-              Sum of all payments received
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                <DollarSign className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm text-muted-foreground">Total Billed</p>
+                {isStatsLoading ? (
+                  <Skeleton className="h-7 w-28 mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold tracking-tight truncate">
+                    {formatCurrency(stats.totalBilled)}
+                  </p>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
+
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Outstanding</CardTitle>
-            <span className="text-2xl font-bold text-red-500">
-              {formatCurrency(stats.outstanding)}
-            </span>
-          </CardHeader>
           <CardContent>
-            <div className="text-xs text-muted-foreground">
-              Unpaid, partial &amp; overdue invoices
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 dark:bg-red-900/20">
+                <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm text-muted-foreground">Outstanding</p>
+                {isStatsLoading ? (
+                  <Skeleton className="h-7 w-28 mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold tracking-tight text-red-600 dark:text-red-400 truncate">
+                    {formatCurrency(stats.totalOutstanding)}
+                  </p>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
+
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Collected</CardTitle>
-            <span className="text-2xl font-bold text-green-500">
-              {formatCurrency(stats.collected)}
-            </span>
-          </CardHeader>
           <CardContent>
-            <div className="text-xs text-muted-foreground">
-              Total amount collected
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 dark:bg-green-900/20">
+                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm text-muted-foreground">Collected</p>
+                {isStatsLoading ? (
+                  <Skeleton className="h-7 w-28 mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold tracking-tight text-green-600 dark:text-green-400 truncate">
+                    {formatCurrency(stats.totalCollected)}
+                  </p>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
+
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Active Invoices
-            </CardTitle>
-            <span className="text-2xl font-bold">{stats.activeInvoices}</span>
-          </CardHeader>
           <CardContent>
-            <div className="text-xs text-muted-foreground">
-              Updated just now
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50 dark:bg-purple-900/20">
+                <Receipt className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm text-muted-foreground">Total Invoices</p>
+                {isStatsLoading ? (
+                  <Skeleton className="h-7 w-12 mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold tracking-tight">
+                    {stats.totalInvoices}
+                  </p>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Invoice Table */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle>Recent Invoices</CardTitle>
               <CardDescription>
@@ -155,14 +326,17 @@ export default function InvoicesPage() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Input
-                placeholder="Search student..."
-                className="w-[200px]"
-                value={filters.search}
-                onChange={(e) =>
-                  setFilters((f) => ({ ...f, search: e.target.value }))
-                }
-              />
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search student..."
+                  className="w-[200px] pl-9"
+                  value={filters.search}
+                  onChange={(e) =>
+                    setFilters((f) => ({ ...f, search: e.target.value }))
+                  }
+                />
+              </div>
               <Select
                 value={filters.status || "all"}
                 onValueChange={(val) =>
@@ -177,103 +351,142 @@ export default function InvoicesPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="unpaid">Unpaid</SelectItem>
-                  <SelectItem value="partial">Partial</SelectItem>
-                  <SelectItem value="overdue">Overdue</SelectItem>
+                  <SelectItem value="PAID">Paid</SelectItem>
+                  <SelectItem value="UNPAID">Unpaid</SelectItem>
+                  <SelectItem value="PARTIAL">Partial</SelectItem>
+                  <SelectItem value="OVERDUE">Overdue</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Invoice</TableHead>
-                <TableHead>Student</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Paid</TableHead>
-                <TableHead>Balance</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                    Loading invoices...
-                  </TableCell>
-                </TableRow>
-              ) : invoices.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                    No invoices found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                invoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                        {invoice.invoiceNumber}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarFallback>
-                            {invoice.studentName.substring(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm">{invoice.studentName}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{formatCurrency(invoice.totalAmount)}</TableCell>
-                    <TableCell className="text-green-600">
-                      {formatCurrency(invoice.paidAmount)}
-                    </TableCell>
-                    <TableCell className="text-red-500 font-medium">
-                      {invoice.balance > 0
-                        ? formatCurrency(invoice.balance)
-                        : "-"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(invoice.status)}>
-                        {invoice.status.toUpperCase()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {format(new Date(invoice.dueDate), "MMM d, yyyy")}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>View Details</DropdownMenuItem>
-                          <DropdownMenuItem>Record Payment</DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem>
-                            <Download className="mr-2 h-4 w-4" /> Download PDF
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Mail className="mr-2 h-4 w-4" /> Send Reminder
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+          {isLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : invoices.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
+                <FileText className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <p className="text-sm font-medium">No invoices found</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Generate invoices to get started
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Invoice</TableHead>
+                    <TableHead>Student</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-right">Paid</TableHead>
+                    <TableHead className="text-right">Balance</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                </TableHeader>
+                <TableBody>
+                  {invoices.map((invoice) => (
+                    <TableRow key={invoice.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-mono text-sm">
+                            {invoice.invoiceNumber}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-7 w-7">
+                            <AvatarFallback className="text-xs">
+                              {(invoice.studentName || "??")
+                                .substring(0, 2)
+                                .toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm">
+                            {invoice.studentName || "Unknown"}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold tabular-nums">
+                        {formatCurrency(invoice.totalAmount)}
+                      </TableCell>
+                      <TableCell className="text-right text-green-600 dark:text-green-400 tabular-nums">
+                        {formatCurrency(invoice.amountPaid)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {invoice.balance > 0 ? (
+                          <span className="text-red-600 dark:text-red-400 font-medium">
+                            {formatCurrency(invoice.balance)}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">&mdash;</span>
+                        )}
+                      </TableCell>
+                      <TableCell>{getStatusBadge(invoice.status)}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                        {invoice.dueDate
+                          ? format(new Date(invoice.dueDate), "MMM d, yyyy")
+                          : "—"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                            >
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => handleViewDetails(invoice)}
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handlePrintInvoice(invoice)}
+                            >
+                              <Printer className="mr-2 h-4 w-4" />
+                              Print Invoice
+                            </DropdownMenuItem>
+                            {invoice.status !== "PAID" && (
+                              <DropdownMenuItem
+                                onClick={() => handleRecordPayment(invoice)}
+                              >
+                                <CreditCard className="mr-2 h-4 w-4" />
+                                Record Payment
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-red-600 focus:text-red-600"
+                              onClick={() => setDeleteInvoiceId(invoice.id)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

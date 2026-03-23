@@ -145,6 +145,12 @@ export const tenantNavigation: NavSection[] = [
           },
           {
             title: "Exam Entry",
+            href: "/assessments/exam-scores",
+            icon: FileText,
+            permission: PERMISSIONS.ACADEMIC_MANAGE,
+          },
+          {
+            title: "Examinations",
             href: "/assessments/exams",
             icon: FileText,
             permission: PERMISSIONS.ACADEMIC_MANAGE,
@@ -177,6 +183,12 @@ export const tenantNavigation: NavSection[] = [
   {
     title: "Finance",
     items: [
+      {
+        title: "Fees Setup",
+        href: "/finance/fee-structure",
+        icon: Settings,
+        permission: PERMISSIONS.FINANCE_MANAGE,
+      },
       {
         title: "Invoices",
         href: "/finance/invoices",

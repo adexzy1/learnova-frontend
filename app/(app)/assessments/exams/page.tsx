@@ -34,7 +34,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { PageHeader } from "@/components/shared/page-header"
 import useExaminationsService from "./_service/useExaminationsService"
-import type { Examination } from "@/lib/api"
+import type { Examination } from "@/types"
 
 const examSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -52,6 +52,7 @@ export default function ExamsPage() {
     examinations,
     examinationsLoading,
     sessions,
+    terms,
     dialogOpen,
     setDialogOpen,
     editingExam,
@@ -106,6 +107,9 @@ export default function ExamsPage() {
         return "bg-muted text-muted-foreground"
     }
   }
+
+  const getTermName = (termId: string) =>
+    terms.find((t) => t.id === termId)?.name ?? termId
 
   const examDialog = (
     <Dialog
@@ -176,9 +180,11 @@ export default function ExamsPage() {
                     <SelectValue placeholder="Select term" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="term-1">First Term</SelectItem>
-                    <SelectItem value="term-2">Second Term</SelectItem>
-                    <SelectItem value="term-3">Third Term</SelectItem>
+                    {terms.map((term) => (
+                      <SelectItem key={term.id} value={term.id}>
+                        {term.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 {errors.termId && (
@@ -308,7 +314,7 @@ export default function ExamsPage() {
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <FileText className="h-4 w-4" />
-                    <span>Term: {exam.termId.replace("term-", "")}</span>
+                    <span>{getTermName(exam.termId)}</span>
                   </div>
                 </div>
                 <div className="mt-4 flex gap-2">

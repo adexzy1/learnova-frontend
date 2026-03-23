@@ -48,53 +48,44 @@ export function FeeStructureTable({
 
   return (
     <>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Applicable Classes</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {feeStructures.length === 0 ? (
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell
-                colSpan={6}
-                className="text-center text-muted-foreground py-8"
-              >
-                No fee structures found. Add one to get started.
-              </TableCell>
+              <TableHead>Name</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Applicable Classes</TableHead>
+              <TableHead className="text-right">Amount</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
-          ) : (
-            feeStructures.map((fs) => (
+          </TableHeader>
+          <TableBody>
+            {feeStructures.map((fs) => (
               <TableRow key={fs.id}>
                 <TableCell className="font-medium">{fs.name}</TableCell>
-                <TableCell className="text-muted-foreground max-w-[200px] truncate">
+                <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
                   {fs.description || "—"}
                 </TableCell>
                 <TableCell>
-                  {fs.applicableClasses.length === 0 ? (
-                    <Badge variant="secondary">All Classes</Badge>
+                  {fs.applicableClassIds.length === 0 ? (
+                    <Badge variant="secondary" className="font-normal">All Classes</Badge>
                   ) : (
                     <div className="flex flex-wrap gap-1">
-                      {fs.applicableClasses.map((cls) => (
-                        <Badge key={cls} variant="outline" className="text-xs">
-                          {cls}
+                      {fs.applicableClasses.map((name, i) => (
+                        <Badge key={fs.applicableClassIds[i]} variant="outline" className="text-xs font-normal">
+                          {name}
                         </Badge>
                       ))}
                     </div>
                   )}
                 </TableCell>
-                <TableCell className="text-right font-medium">
+                <TableCell className="text-right font-semibold tabular-nums">
                   {formatCurrency(fs.amount)}
                 </TableCell>
                 <TableCell>
                   {fs.isActive ? (
-                    <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">
+                    <Badge className="bg-green-50 text-green-700 border-green-200 hover:bg-green-50 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">
                       Active
                     </Badge>
                   ) : (
@@ -102,10 +93,11 @@ export function FeeStructureTable({
                   )}
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
+                  <div className="flex justify-end gap-1">
                     <Button
                       variant="ghost"
                       size="icon"
+                      className="h-8 w-8"
                       onClick={() => setEditTarget(fs)}
                     >
                       <Pencil className="h-4 w-4" />
@@ -113,7 +105,7 @@ export function FeeStructureTable({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="text-destructive hover:text-destructive"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
                       onClick={() => setDeleteTarget(fs)}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -121,10 +113,10 @@ export function FeeStructureTable({
                   </div>
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       <FeeStructureDialog
         open={!!editTarget}

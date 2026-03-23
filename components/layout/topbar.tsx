@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Bell,
+  BellOff,
   Menu,
   LogOut,
   User,
@@ -14,11 +15,16 @@ import {
   Wifi,
   WifiOff,
   Check,
+  CheckCheck,
   RefreshCw,
   Shield,
   Users,
   BookOpen,
   UserCog,
+  Info,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -34,7 +40,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
-import { useQuery } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { AxiosResponse } from "axios";
 import { useTenant } from "@/providers/tenant-provider";
 // import { useAuth } from "@/providers/auth-provider";
@@ -45,6 +52,33 @@ import apiClient from "@/lib/api-client";
 import { NOTIFICATIONS_ENDPOINTS } from "@/lib/api-routes";
 import { queryKeys } from "@/app/constants/queryKeys";
 import type { Notification } from "@/types";
+import { Separator } from "@/components/ui/separator";
+
+const NOTIF_TYPE_CONFIG: Record<
+  Notification["type"],
+  { icon: typeof Info; bg: string; fg: string }
+> = {
+  info: {
+    icon: Info,
+    bg: "bg-blue-100 dark:bg-blue-950",
+    fg: "text-blue-600 dark:text-blue-400",
+  },
+  warning: {
+    icon: AlertTriangle,
+    bg: "bg-amber-100 dark:bg-amber-950",
+    fg: "text-amber-600 dark:text-amber-400",
+  },
+  success: {
+    icon: CheckCircle2,
+    bg: "bg-emerald-100 dark:bg-emerald-950",
+    fg: "text-emerald-600 dark:text-emerald-400",
+  },
+  error: {
+    icon: XCircle,
+    bg: "bg-red-100 dark:bg-red-950",
+    fg: "text-red-600 dark:text-red-400",
+  },
+};
 
 const PERSONA_META: Record<
   string,
@@ -85,16 +119,32 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
   const { user, personas, activePersona, switchPersona, isSwitchingPersona } =
     useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
   // const { tenant, isSuperAdmin } = useTenant()
   // const { user, logout } = useAuth()
   const { isOnline, unsyncedCount } = useOffline();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const { data: notificationsResponse } = useQuery<AxiosResponse<Notification[]>>({
+  const { data: notificationsResponse } = useQuery<AxiosResponse<{ data: Notification[] }>>({
     queryKey: [queryKeys.NOTIFICATIONS],
     queryFn: () => apiClient.get(NOTIFICATIONS_ENDPOINTS.GET_ALL),
+    refetchInterval: 30_000,
   });
-  const notifUnreadCount = (notificationsResponse?.data ?? []).filter((n) => !n.isRead).length;
+  const notifications = notificationsResponse?.data?.data ?? [];
+  const notifUnreadCount = notifications.filter((n) => !n.isRead).length;
+
+  const markReadMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiClient.patch(NOTIFICATIONS_ENDPOINTS.MARK_READ.replace(":id", id)),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [queryKeys.NOTIFICATIONS] }),
+  });
+
+  const markAllReadMutation = useMutation({
+    mutationFn: () => apiClient.patch(NOTIFICATIONS_ENDPOINTS.MARK_ALL_READ),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: [queryKeys.NOTIFICATIONS] }),
+  });
 
   const handleLogout = async () => {
     router.push("/");
@@ -207,56 +257,112 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
               {notifUnreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center">
+                <span className="absolute -top-0.5 -right-0.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-medium text-primary-foreground">
                   {notifUnreadCount > 9 ? "9+" : notifUnreadCount}
                 </span>
               )}
               <span className="sr-only">Notifications</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {(notificationsResponse?.data ?? [])
-              .filter((n) => !n.isRead)
-              .slice(0, 3)
-              .map((n) => (
-                <DropdownMenuItem
-                  key={n.id}
-                  className="flex flex-col items-start gap-1 cursor-pointer"
-                  asChild={!!n.link}
+          <DropdownMenuContent align="end" className="w-[380px] p-0">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold">Notifications</span>
+                {notifUnreadCount > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="h-5 min-w-5 px-1.5 text-[10px] leading-none"
+                  >
+                    {notifUnreadCount}
+                  </Badge>
+                )}
+              </div>
+              {notifUnreadCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs text-muted-foreground hover:text-foreground gap-1"
+                  onClick={() => markAllReadMutation.mutate()}
+                  disabled={markAllReadMutation.isPending}
                 >
-                  {n.link ? (
-                    <Link href={n.link}>
-                      <span className="font-medium">{n.title}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {n.message}
+                  <CheckCheck className="h-3 w-3" />
+                  Mark all read
+                </Button>
+              )}
+            </div>
+            <Separator />
+
+            {/* Notification items */}
+            <div className="max-h-[340px] overflow-y-auto">
+              {notifications
+                .filter((n) => !n.isRead)
+                .sort(
+                  (a, b) =>
+                    new Date(b.createdAt).getTime() -
+                    new Date(a.createdAt).getTime()
+                )
+                .slice(0, 5)
+                .map((n) => {
+                  const config = NOTIF_TYPE_CONFIG[n.type];
+                  const NIcon = config.icon;
+                  const item = (
+                    <div
+                      key={n.id}
+                      className="group relative flex items-start gap-3 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer"
+                      onClick={() => {
+                        if (!n.isRead) markReadMutation.mutate(n.id);
+                        if (n.link) router.push(n.link);
+                      }}
+                    >
+                      <span className="absolute left-1.5 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-primary" />
+                      <span
+                        className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${config.bg}`}
+                      >
+                        <NIcon className={`h-3.5 w-3.5 ${config.fg}`} />
                       </span>
-                    </Link>
-                  ) : (
-                    <>
-                      <span className="font-medium">{n.title}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {n.message}
-                      </span>
-                    </>
-                  )}
-                </DropdownMenuItem>
-              ))}
-            {notifUnreadCount === 0 && (
-              <DropdownMenuItem disabled className="text-center justify-center">
-                <span className="text-xs text-muted-foreground">No new notifications</span>
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link
-                href="/notifications"
-                className="w-full text-center justify-center"
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium leading-snug">
+                          {n.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                          {n.message}
+                        </p>
+                        <span className="text-[11px] text-muted-foreground/60 mt-1 block">
+                          {formatDistanceToNow(new Date(n.createdAt), {
+                            addSuffix: true,
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                  return <div key={n.id}>{item}</div>;
+                })}
+
+              {notifUnreadCount === 0 && (
+                <div className="flex flex-col items-center justify-center py-10">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted mb-2">
+                    <BellOff className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    No new notifications
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <Separator />
+            <div className="p-1.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full text-xs font-medium text-muted-foreground hover:text-foreground"
+                asChild
               >
-                View all notifications
-              </Link>
-            </DropdownMenuItem>
+                <Link href="/notifications">View all notifications</Link>
+              </Button>
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
 

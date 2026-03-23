@@ -114,15 +114,8 @@ const useResultsService = () => {
 
   const sessions = sessionsResponse?.data?.data ?? [];
   const terms = termsResponse?.data?.data ?? [];
-  const classes = classesResponse?.data?.data ?? [];
+  const classOptions = classesResponse?.data?.data ?? [];
   const results = resultsResponse?.data?.data ?? [];
-
-  const classOptions = classes.flatMap((level) =>
-    (level.classArms ?? []).map((arm) => ({
-      id: arm.id,
-      name: `${level.name} ${arm.name}`,
-    })),
-  );
 
   const filteredResults = results.filter(
     (result) =>

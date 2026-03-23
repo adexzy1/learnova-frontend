@@ -39,7 +39,7 @@ export function DeactivateStaffDialog({
             <span className="font-semibold text-foreground">
               {staff.firstName} {staff.lastName}
             </span>{" "}
-            ({staff.employeeId}). They will no longer be able to access the
+            ({staff.staffNumber}). They will no longer be able to access the
             system. This action can be reversed later.
           </AlertDialogDescription>
         </AlertDialogHeader>

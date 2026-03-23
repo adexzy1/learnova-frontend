@@ -190,9 +190,9 @@ export default function SessionsPage() {
       <DataTablePagination
         page={pagination.page}
         pageSize={pagination.per_page}
-        totalPages={meta?.lastPage || 0}
+        totalPages={meta?.pageCount || 0}
         hasNextPage={meta?.hasNextPage || false}
-        hasPrevPage={meta?.hasPrevPage || false}
+        hasPrevPage={meta?.hasPreviousPage || false}
         onPaginationChange={(pagination) =>
           setPagination({
             page: pagination.page,

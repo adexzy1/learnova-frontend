@@ -684,53 +684,8 @@ export async function fetchMessages(): Promise<Message[]> {
 }
 
 // ==================== DASHBOARD STATS ====================
-export interface DashboardStats {
-  totalStudents: number;
-  totalStaff: number;
-  totalClasses: number;
-  attendanceRate: number;
-  revenueCollected: number;
-  pendingInvoices: number;
-  upcomingExams: number;
-  recentActivities: Array<{
-    id: string;
-    type: string;
-    description: string;
-    timestamp: string;
-  }>;
-}
-
-export async function fetchDashboardStats(): Promise<DashboardStats> {
-  return mockFetch({
-    totalStudents: 450,
-    totalStaff: 35,
-    totalClasses: 12,
-    attendanceRate: 94.5,
-    revenueCollected: 45000000,
-    pendingInvoices: 23,
-    upcomingExams: 5,
-    recentActivities: [
-      {
-        id: "1",
-        type: "admission",
-        description: "New student application received",
-        timestamp: "2024-12-15T10:30:00Z",
-      },
-      {
-        id: "2",
-        type: "payment",
-        description: "Payment of ₦150,000 received from John Doe",
-        timestamp: "2024-12-15T09:15:00Z",
-      },
-      {
-        id: "3",
-        type: "attendance",
-        description: "Attendance marked for JSS 1A",
-        timestamp: "2024-12-15T08:00:00Z",
-      },
-    ],
-  });
-}
+// Dashboard stats are now fetched via useDashboardService hook
+// using real API endpoints (see features/dashboard/use-dashboard-service.ts)
 
 // ==================== FEE TYPES ====================
 export interface FeeType {
@@ -873,9 +828,6 @@ export const mockApi = {
   // Communications
   getNotifications: fetchNotifications,
   getMessages: fetchMessages,
-
-  // Dashboard
-  getDashboardStats: fetchDashboardStats,
 
   // Examinations
   getExaminations: fetchExaminations,

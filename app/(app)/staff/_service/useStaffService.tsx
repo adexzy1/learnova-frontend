@@ -1,12 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { PaginatedResponse, Staff } from "@/types";
-import axiosClient from "@/lib/axios-client";
-import { ROLES_ENDPOINTS, STAFF_ENDPOINTS } from "@/lib/api-routes";
+import type { PaginatedResponse, Staff, ApiError } from "@/types";
+import apiClient from "@/lib/api-client";
+import { STAFF_ENDPOINTS } from "@/lib/api-routes";
 import { queryKeys } from "@/app/constants/queryKeys";
 import { toast } from "sonner";
-import { AxiosResponse } from "axios";
-import { Role } from "@/components/settings/roles-manager/types";
+import type { AxiosResponse } from "axios";
 
 const useStaffService = () => {
   const queryClient = useQueryClient();
@@ -29,8 +28,8 @@ const useStaffService = () => {
     AxiosResponse<PaginatedResponse<Staff>>
   >({
     queryKey: [queryKeys.STAFF, pagination.page, pagination.per_page, filters],
-    queryFn: async () =>
-      axiosClient.get(STAFF_ENDPOINTS.GET_ALL_STAFF, {
+    queryFn: () =>
+      apiClient.get(STAFF_ENDPOINTS.GET_ALL_STAFF, {
         params: {
           page: pagination.page,
           limit: pagination.per_page,
@@ -44,25 +43,18 @@ const useStaffService = () => {
   });
 
   const deactivateMutation = useMutation({
-    mutationFn: async (staffId: string) => {
-      const response = await axiosClient.patch(
+    mutationFn: (staffId: string) =>
+      apiClient.patch(
         STAFF_ENDPOINTS.DEACTIVATE_STAFF.replace(":id", staffId),
-      );
-      return response.data;
-    },
-    onSuccess: (data) => {
+      ),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [queryKeys.STAFF] });
-      toast.success("Success", {
-        description: data.message || "Staff member deactivated successfully",
-      });
+      toast.success("Staff member deactivated successfully");
       setDeactivateDialogOpen(false);
       setDeactivateStaff(null);
     },
-    onError: (error: any) => {
-      toast.error("Error", {
-        description:
-          error?.response?.data?.message || "Failed to deactivate staff member",
-      });
+    onError: (error: ApiError) => {
+      toast.error(error.message ?? "Failed to deactivate staff member");
     },
   });
 

@@ -35,6 +35,7 @@ export const TERM_ENDPOINTS = {
 
 export const CLASS_ENDPOINTS = {
   GET_ALL_CLASSES: "/academics/class",
+  GET_SELECTABLE_CLASSES: "/academics/class/select",
   GET_ALL_CLASS_ARMS: "/academics/class/arm",
   GET_CLASS_BY_ID: "/academics/class/:id",
   CREATE_CLASS: "/academics/class",
@@ -42,6 +43,13 @@ export const CLASS_ENDPOINTS = {
   UPDATE_CLASS: "/academics/class/:id",
   DELETE_CLASS: "/academics/class/:id",
   DELETE_CLASS_ARM: "/academics/class/arm/:id",
+  // Subject-Teacher Assignments
+  ASSIGN_SUBJECT_TEACHER: "/academics/class/subject-teachers",
+  GET_SUBJECT_TEACHERS_BY_STAFF:
+    "/academics/class/subject-teachers/staff/:staffId",
+  GET_SUBJECT_TEACHERS_BY_CLASS_ARM:
+    "/academics/class/subject-teachers/class-arm/:classArmId",
+  REMOVE_SUBJECT_TEACHER: "/academics/class/subject-teachers/:id",
 };
 
 export const SUBJECT_ENDPOINTS = {
@@ -131,13 +139,20 @@ export const ASSESSMENT_ENDPOINTS = {
   CA_SCORES_SAVE: "/academics/assessment/ca",
   EXAM_SCORES_GET: "/academics/assessment/exam",
   EXAM_SCORES_SAVE: "/academics/assessment/exam",
-  TIMETABLE_GET: "/academics/assessment/timetable",
-  TIMETABLE_CREATE: "/academics/assessment/timetable",
-  TIMETABLE_UPDATE: "/academics/assessment/timetable/:id",
-  TIMETABLE_DELETE: "/academics/assessment/timetable/:id",
   EXAMINATIONS_GET: "/academics/assessment/examinations",
   EXAMINATIONS_CREATE: "/academics/assessment/examinations",
   EXAMINATIONS_UPDATE: "/academics/assessment/examinations/:id",
+  EXAM_TIMETABLE_GET: "/academics/assessment/exam-timetable",
+  EXAM_TIMETABLE_CREATE: "/academics/assessment/exam-timetable",
+};
+
+export const TIMETABLE_ENDPOINTS = {
+  GET: "/academics/timetable",
+  CREATE: "/academics/timetable",
+  UPDATE: "/academics/timetable/:id",
+  DELETE: "/academics/timetable/:id",
+  COPY: "/academics/timetable/copy",
+  SUBJECT_TEACHERS: "/academics/timetable/subject-teachers",
 };
 
 export const ATTENDANCE_ENDPOINTS = {
@@ -178,11 +193,15 @@ export const FINANCE_ENDPOINTS = {
   INVOICES_GET_ALL: "/finance/invoices",
   INVOICES_GET_BY_ID: "/finance/invoices/:id",
   INVOICES_CREATE: "/finance/invoices",
+  INVOICES_GENERATE: "/finance/invoices/generate",
   INVOICES_UPDATE: "/finance/invoices/:id",
   INVOICES_DELETE: "/finance/invoices/:id",
+  INVOICES_STATS: "/finance/invoices/stats",
   PAYMENTS_GET_ALL: "/finance/payments",
   PAYMENTS_CREATE: "/finance/payments",
+  PAYMENTS_STATS: "/finance/payments/stats",
   LEDGER_GET: "/finance/ledger",
+  LEDGER_STATS: "/finance/ledger/stats",
   FEE_STRUCTURES_GET_ALL: "/finance/fee-structures",
   FEE_STRUCTURES_GET_BY_ID: "/finance/fee-structures/:id",
   FEE_STRUCTURES_CREATE: "/finance/fee-structures",
@@ -232,4 +251,16 @@ export const ASSIGNMENTS_ENDPOINTS = {
 export const GUARDIAN_ENDPOINTS = {
   GET_MY_CHILDREN: "/guardians/my-children",
   GET_CHILD_STATS: "/guardians/children/:childId/stats",
+};
+
+export const DASHBOARD_ENDPOINTS = {
+  CONTEXT: "/dashboard/context",
+  PEOPLE: "/dashboard/people",
+  ATTENDANCE: "/dashboard/attendance",
+  ACADEMIC_PERFORMANCE: "/dashboard/academic-performance",
+  CLASSES: "/dashboard/classes",
+  FINANCE_SUMMARY: "/dashboard/finance/summary",
+  FINANCE_REVENUE: "/dashboard/finance/revenue",
+  FINANCE_PAYMENTS: "/dashboard/finance/payments",
+  UPCOMING_EXAMS: "/dashboard/upcoming-exams",
 };

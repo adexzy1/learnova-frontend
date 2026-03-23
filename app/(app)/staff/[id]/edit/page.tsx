@@ -46,6 +46,7 @@ export default function EditStaffPage() {
         isLoading={isLoading}
         form={form}
         submitLabel="Update Staff"
+        isEdit
       />
     </div>
   );
