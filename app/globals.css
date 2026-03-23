@@ -1,46 +1,46 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
+@import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(0.99 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: oklch(0.985 0.002 250);
+  --foreground: oklch(0.16 0.01 260);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.16 0.01 260);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.55 0.2 255);
+  --popover-foreground: oklch(0.16 0.01 260);
+  --primary: oklch(0.52 0.23 260);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.5 0 0);
+  --secondary: oklch(0.955 0.02 255);
+  --secondary-foreground: oklch(0.28 0.05 260);
+  --muted: oklch(0.965 0.005 250);
+  --muted-foreground: oklch(0.48 0.02 260);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.91 0 0);
-  --input: oklch(0.91 0 0);
-  --ring: oklch(0.55 0.2 255);
-  --chart-1: oklch(0.55 0.2 255);
-  --chart-2: oklch(0.6 0.15 160);
-  --chart-3: oklch(0.65 0.2 40);
-  --chart-4: oklch(0.7 0.15 300);
-  --chart-5: oklch(0.6 0.2 80);
+  --border: oklch(0.915 0.01 255);
+  --input: oklch(0.915 0.01 255);
+  --ring: oklch(0.55 0.22 260);
+  --chart-1: oklch(0.55 0.23 260);
+  --chart-2: oklch(0.62 0.17 170);
+  --chart-3: oklch(0.68 0.18 45);
+  --chart-4: oklch(0.58 0.2 310);
+  --chart-5: oklch(0.65 0.19 85);
   --radius: 0.5rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.55 0.2 255);
+  --sidebar: oklch(0.98 0.005 255);
+  --sidebar-foreground: oklch(0.16 0.01 260);
+  --sidebar-primary: oklch(0.52 0.23 260);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.91 0 0);
-  --sidebar-ring: oklch(0.55 0.2 255);
-  
+  --sidebar-accent: oklch(0.94 0.03 255);
+  --sidebar-accent-foreground: oklch(0.28 0.05 260);
+  --sidebar-border: oklch(0.915 0.01 255);
+  --sidebar-ring: oklch(0.55 0.22 260);
+
   /* Tenant branding overrides */
-  --tenant-primary: #2563eb;
-  --tenant-secondary: #1e40af;
+  --tenant-primary: #4f46e5;
+  --tenant-secondary: #3730a3;
 }
 
 .dark {
@@ -79,8 +79,8 @@
 }
 
 @theme inline {
-  --font-sans: 'Geist', 'Geist Fallback';
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --font-sans: "Geist", "Geist Fallback";
+  --font-mono: "Geist Mono", "Geist Mono Fallback";
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -125,5 +125,48 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* ── Print styles for timetable ─────────────────────────────────── */
+@media print {
+  /* Hide everything except the printable timetable */
+  body * {
+    visibility: hidden;
+  }
+  #printable-timetable,
+  #printable-timetable * {
+    visibility: visible;
+  }
+  #printable-timetable {
+    position: absolute;
+    inset: 0;
+    border: none;
+    box-shadow: none;
+    margin: 0;
+    padding: 1rem;
+  }
+
+  /* Clean table styling for print */
+  #printable-timetable table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11pt;
+  }
+  #printable-timetable th,
+  #printable-timetable td {
+    border: 1px solid #333 !important;
+    padding: 6px 8px;
+  }
+  #printable-timetable th {
+    background-color: #f0f0f0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Force landscape for wider timetable */
+  @page {
+    size: landscape;
+    margin: 1cm;
   }
 }

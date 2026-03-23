@@ -354,6 +354,30 @@ sequenceDiagram
     LoginPage->>User: Redirect to Dashboard
 ```
 
+### Persona Switching Flow
+
+Users with multiple personas (e.g. Admin + Guardian) can switch between them at runtime. The new persona is embedded in a re-issued JWT, and the frontend performs a full page reload so the server-side layout refetches session data scoped to the new persona.
+
+```mermaid
+sequenceDiagram
+    participant User as User (Topbar)
+    participant FE as Frontend
+    participant API as POST /auth/switch-persona
+    participant Svc as AuthenticationService
+    participant Browser as Page Reload
+
+    User->>FE: Selects persona from dropdown
+    FE->>API: { persona: "GUARDIAN" }
+    API->>Svc: switchPersona(req, "GUARDIAN")
+    Svc->>Svc: Validate persona ∈ user's allowed list
+    Svc-->>API: New JWT + refresh token cookies
+    API-->>FE: { message, activePersona }
+    FE->>Browser: window.location.reload()
+    Browser->>Browser: Server layout calls getUserSession()
+    Browser->>Browser: AppShell renders with new activePersona
+    Browser->>Browser: Sidebar switches to Guardian navigation
+```
+
 ### Multi-Tenant Data Isolation
 
 Every API request includes tenant context:
