@@ -49,7 +49,7 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (error: any) {
       form.setError("root", {
-        message: error.response.data.message,
+        message: error.message,
       });
     } finally {
       setIsLoading(false);

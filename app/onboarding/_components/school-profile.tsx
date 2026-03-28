@@ -34,6 +34,8 @@ const SchoolProfile = ({ setStep }: SchoolProfileProps) => {
     setStep(2);
   };
 
+  console.log("user", user);
+
   return (
     <div className="space-y-6">
       <StepHeader

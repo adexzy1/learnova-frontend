@@ -5,7 +5,7 @@ import { TenantSettings } from "../types";
 import { queryKeys } from "@/app/constants/queryKeys";
 
 export const useTenantSettings = () => {
-  const response = useQuery<TenantSettings>({
+  const response = useQuery<{ data: TenantSettings }>({
     queryKey: [queryKeys.TENANT_SETTINGS],
     queryFn: async () => {
       const resp = await axiosClient.get(
@@ -16,7 +16,7 @@ export const useTenantSettings = () => {
   });
 
   return {
-    settings: response.data,
+    settings: response.data?.data,
     isLoading: response.isLoading,
     isError: response.isError,
     error: response.error,

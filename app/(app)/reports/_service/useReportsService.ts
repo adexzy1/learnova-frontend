@@ -3,7 +3,11 @@ import type { AxiosResponse } from "axios";
 import apiClient from "@/lib/api-client";
 import { REPORTS_ENDPOINTS } from "@/lib/api-routes";
 import { queryKeys } from "@/app/constants/queryKeys";
-import type { AttendanceTrendPoint, FeeCollectionPoint, PerformancePoint } from "@/types";
+import type {
+  AttendanceTrendPoint,
+  FeeCollectionPoint,
+  PerformancePoint,
+} from "@/types";
 
 interface ReportStats {
   avgAttendance: number;
@@ -15,7 +19,7 @@ export default function useReportsService(termId?: string) {
   const params = termId ? { termId } : {};
 
   const { data: attendanceResponse, isLoading: loadingAttendance } = useQuery<
-    AxiosResponse<AttendanceTrendPoint[]>
+    AxiosResponse<{ data: AttendanceTrendPoint[] }>
   >({
     queryKey: [queryKeys.REPORTS, "attendance-trend", termId],
     queryFn: () =>
@@ -23,37 +27,36 @@ export default function useReportsService(termId?: string) {
   });
 
   const { data: feeResponse, isLoading: loadingFees } = useQuery<
-    AxiosResponse<FeeCollectionPoint[]>
+    AxiosResponse<{ data: FeeCollectionPoint[] }>
   >({
     queryKey: [queryKeys.REPORTS, "fee-collection", termId],
-    queryFn: () =>
-      apiClient.get(REPORTS_ENDPOINTS.FEE_COLLECTION, { params }),
+    queryFn: () => apiClient.get(REPORTS_ENDPOINTS.FEE_COLLECTION, { params }),
   });
 
   const { data: performanceResponse, isLoading: loadingPerformance } = useQuery<
-    AxiosResponse<PerformancePoint[]>
+    AxiosResponse<{ data: PerformancePoint[] }>
   >({
     queryKey: [queryKeys.REPORTS, "performance", termId],
-    queryFn: () =>
-      apiClient.get(REPORTS_ENDPOINTS.PERFORMANCE, { params }),
+    queryFn: () => apiClient.get(REPORTS_ENDPOINTS.PERFORMANCE, { params }),
   });
 
-  const attendanceData = attendanceResponse?.data ?? [];
-  const feeData = feeResponse?.data ?? [];
-  const performanceData = performanceResponse?.data ?? [];
+  const attendanceData = attendanceResponse?.data.data ?? [];
+  const feeData = feeResponse?.data.data ?? [];
+  const performanceData = performanceResponse?.data.data ?? [];
 
   // Compute stats from fetched data
   const stats: ReportStats = {
     avgAttendance:
       attendanceData.length > 0
-        ? attendanceData.reduce((sum, d) => sum + d.rate, 0) / attendanceData.length
+        ? attendanceData.reduce((sum, d) => sum + d.rate, 0) /
+          attendanceData.length
         : 0,
     feeRecovery:
       feeData.length > 0
         ? (feeData.reduce((sum, d) => sum + d.collected, 0) /
             Math.max(
               feeData.reduce((sum, d) => sum + d.collected + d.outstanding, 0),
-              1
+              1,
             )) *
           100
         : 0,

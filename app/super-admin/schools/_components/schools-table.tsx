@@ -1,18 +1,18 @@
 "use client";
 
 import { DataTable } from "@/components/shared/table/data-table";
-import { Tenant } from "@/types";
+import { TenantListItem } from "@/types";
 import { schoolsColumns } from "./schools-columns";
 
 interface SchoolsTableProps {
-  data: Tenant[];
+  data: TenantListItem[];
   isLoading: boolean;
   pageCount: number;
   pagination: { page: number; per_page: number };
   onPaginationChange: (pagination: { page: number; per_page: number }) => void;
   search: string;
   onSearchChange: (search: string) => void;
-  onEdit: (school: Tenant) => void;
+  onEdit: (school: TenantListItem) => void;
 }
 
 export function SchoolsTable({

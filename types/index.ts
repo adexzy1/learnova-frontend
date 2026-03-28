@@ -8,29 +8,77 @@ export interface TenantBranding {
 }
 
 export interface TenantContext {
-  tenantId: string;
-  tenantSlug: string;
+  id: number;
+  tenantId: number;
+  name: string;
+  slug: string;
+  status: number;
   schoolName: string;
-  branding: TenantBranding;
-  academicConfig: AcademicConfig;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  website: string | null;
+  description: string | null;
+  currentSessionId: string | null;
+  currentTermId: string | null;
+  autoPromoteStudents: boolean;
+  lockPastResults: boolean;
+  primaryColor: string;
+  logoUrl: string | null;
+  emailNotificationsEnabled: boolean;
+  smsAlertsEnabled: boolean;
+  inAppNotificationsEnabled: boolean;
+  onboardingStep: string;
+  onboardingCompletedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TenantAdmin {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string | null;
+}
+
+export interface TenantSubscription {
+  id: string;
+  status: "TRIAL" | "ACTIVE" | "CANCELLED" | "EXPIRED";
+  trialStartAt: string;
+  trialEndAt: string;
+  currentPeriodStart: string | null;
+  currentPeriodEnd: string | null;
+  nextPaymentDate: string | null;
+  plan: {
+    id: string;
+    name: string;
+    price: number;
+    currency: string;
+  } | null;
 }
 
 export interface Tenant {
-  id: string;
+  id: number;
   name: string;
-  status: "Active" | "Suspended" | "Inactive";
-  trialEndAt: string;
-  createdAt?: string;
+  slug: string;
+  status: number;
+  createdAt: string;
+  admin: TenantAdmin | null;
+  userCount: number;
+  subscription: TenantSubscription | null;
+}
+
+/** Shape returned by GET /tenant (list endpoint) */
+export interface TenantListItem {
+  id: number;
+  name: string;
   domainName: string;
-  planId: string;
-  accountName: string;
-  firstName: string;
-  lastName: string;
-  bankCode: string;
-  accountNumber: string;
-  email: string;
-  phone: string;
-  onboardingStep?: number;
+  createdAt: string;
+  plan: string | null;
+  status: string | null;
+  trialEndAt: string | null;
+  currentPeriodEnd: string | null;
 }
 
 export interface Plan {
@@ -58,15 +106,20 @@ export interface Subscription {
   planId: string;
   plan: SubscriptionPlan;
   status: "active" | "trial" | "expired" | "cancelled" | "past_due";
-  currentPeriodStart: string;
-  currentPeriodEnd: string;
-  trialEndAt?: string;
+  periodStart: string;
+  periodEnd: string;
+  trialStartAt: string | null;
+  trialEndAt: string | null;
+  currentPeriodStart: string | null;
+  currentPeriodEnd: string | null;
+  pendingPlanId: string | null;
+  pendingPlanName: string | null;
   cancelledAt?: string;
   usage: {
     students: number;
     staff: number;
     storageUsed: number;
-  };
+  } | null;
   createdAt: string;
   updatedAt: string;
 }

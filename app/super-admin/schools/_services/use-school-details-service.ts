@@ -17,7 +17,7 @@ export function useSchoolDetailsService() {
       const res = await axiosClient.get(
         TENANT_ENDPOINTS.GET_TENANT_BY_ID.replace(":id", schoolId),
       );
-      return res.data;
+      return res.data.data;
     },
   });
 

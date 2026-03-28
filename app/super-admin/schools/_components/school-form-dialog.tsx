@@ -26,13 +26,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import { Tenant } from "@/types";
+import { TenantListItem } from "@/types";
 import { UseCreateSchoolService } from "../_services/use-create-school-service";
 
 interface SchoolFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialData?: Tenant | null;
+  initialData?: TenantListItem | null;
 }
 
 export function SchoolFormDialog({

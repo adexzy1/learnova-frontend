@@ -382,6 +382,18 @@ export const superAdminNavigation: NavSection[] = [
         icon: Users,
         permission: PERMISSIONS.APP_MANAGE,
       },
+      {
+        title: "Subscriptions",
+        href: "/super-admin/subscriptions",
+        icon: CreditCard,
+        permission: PERMISSIONS.APP_MANAGE,
+      },
+      {
+        title: "Analytics",
+        href: "/super-admin/analytics",
+        icon: BarChart3,
+        permission: PERMISSIONS.APP_MANAGE,
+      },
     ],
   },
   {
@@ -391,18 +403,6 @@ export const superAdminNavigation: NavSection[] = [
         title: "Audit Logs",
         href: "/super-admin/audit",
         icon: ScrollText,
-        permission: PERMISSIONS.APP_MANAGE,
-      },
-      {
-        title: "Configuration",
-        href: "/super-admin/config",
-        icon: Settings,
-        permission: PERMISSIONS.APP_MANAGE,
-      },
-      {
-        title: "Security",
-        href: "/super-admin/security",
-        icon: Shield,
         permission: PERMISSIONS.APP_MANAGE,
       },
     ],

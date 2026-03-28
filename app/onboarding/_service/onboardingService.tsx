@@ -1,6 +1,12 @@
 import axiosClient from "@/lib/axios-client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ONBOARDING_ENDPOINTS } from "@/lib/api-routes";
+import {
+  CLASS_ENDPOINTS,
+  GRADING_ENDPOINTS,
+  ONBOARDING_ENDPOINTS,
+  SESSION_ENDPOINTS,
+  TENANT_SETTINGS_ENDPOINTS,
+} from "@/lib/api-routes";
 import { PasswordFormValues } from "../change-password/page";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -18,6 +24,7 @@ import {
   gradingPolicySchema,
   GradingPolicyFormValues,
 } from "../schema/gradingSystemSchema";
+import { useTenant } from "@/providers/tenant-provider";
 
 export const useChangeDefaultPassword = () => {
   const router = useRouter();
@@ -45,10 +52,11 @@ export const useChangeDefaultPassword = () => {
 };
 
 export const useUpdateSchoolProfile = (user: User | null) => {
+  const { tenant } = useTenant();
   const form = useForm({
     resolver: zodResolver(schoolSettingsSchema),
     defaultValues: {
-      schoolName: user?.tenantUsers?.[0]?.tenant?.name || "",
+      schoolName: tenant?.schoolName || "",
       phone: "",
       email: user?.email || "",
       address: "",
@@ -59,8 +67,8 @@ export const useUpdateSchoolProfile = (user: User | null) => {
   const router = useRouter();
   const mutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await axiosClient.post(
-        ONBOARDING_ENDPOINTS.UPDATE_SCHOOL_PROFILE,
+      const response = await axiosClient.put(
+        TENANT_SETTINGS_ENDPOINTS.UPDATE_SCHOOL_PROFILE,
         data,
       );
       return response.data;
@@ -104,7 +112,7 @@ export const useSetAcademicYear = () => {
   const mutation = useMutation({
     mutationFn: async (data: any) => {
       const response = await axiosClient.post(
-        ONBOARDING_ENDPOINTS.SET_ACADEMIC_YEAR,
+        SESSION_ENDPOINTS.SETUP_ACADEMIC_YEAR,
         data,
       );
       return response.data;
@@ -146,8 +154,6 @@ export const useSetupClassStructure = () => {
     },
   });
 
-  console.log(form.formState.errors);
-
   const formClassLevels = useFieldArray({
     control: form.control,
     name: "classes",
@@ -156,7 +162,7 @@ export const useSetupClassStructure = () => {
   const mutation = useMutation({
     mutationFn: async (data: any) => {
       const response = await axiosClient.post(
-        ONBOARDING_ENDPOINTS.ADD_CLASS_STRUCTURE,
+        CLASS_ENDPOINTS.SETUP_CLASS_STRUCTURE,
         data,
       );
       return response.data;
@@ -206,7 +212,7 @@ export const useSetGradingSystem = () => {
   const mutation = useMutation({
     mutationFn: async (data: GradingPolicyFormValues) => {
       const response = await axiosClient.post(
-        ONBOARDING_ENDPOINTS.SET_GRADING_SYSTEM,
+        GRADING_ENDPOINTS.SETUP_GRADING_SYSTEM,
         data,
       );
       return response.data;

@@ -3,19 +3,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { AxiosResponse } from "axios";
-import {
-  Search,
-  Download,
-  User,
-} from "lucide-react";
+import { Search, Download, User } from "lucide-react";
 import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -35,36 +28,72 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { PageHeader } from "@/components/shared/page-header";
-import apiClient from "@/lib/api-client";
+import axiosClient from "@/lib/axios-client";
 import { AUDIT_ENDPOINTS } from "@/lib/api-routes";
 import { queryKeys } from "@/app/constants/queryKeys";
-import type { PaginatedResponse } from "@/types";
+import { PaginatedResponse } from "@/types";
 
 interface AuditLogEntry {
   id: string;
   action: string;
-  user: string;
-  role: string;
-  ip: string;
-  timestamp: string;
-  status: "success" | "warning" | "error";
-  details: string;
+  entity: string;
+  entityId: string | null;
+  userId: string;
+  userRole: string | null;
+  userEmail: string | null;
+  detail: string | null;
+  metadata: Record<string, any> | null;
+  createdAt: string;
+}
+
+interface AuditResponse {
+  data: AuditLogEntry[];
+  meta: {
+    total: number;
+    page: number;
+    pageSize: number;
+    lastPage: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
 }
 
 export default function AuditLogPage() {
   const [page, setPage] = useState(1);
+  const [actionFilter, setActionFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: response, isLoading, error } = useQuery<
-    AxiosResponse<PaginatedResponse<AuditLogEntry>>
-  >({
-    queryKey: [queryKeys.AUDIT_LOGS, page],
+  const {
+    data: response,
+    isLoading,
+    error,
+  } = useQuery<AxiosResponse<PaginatedResponse<AuditLogEntry>>>({
+    queryKey: [queryKeys.AUDIT_LOGS, page, actionFilter],
     queryFn: () =>
-      apiClient.get(AUDIT_ENDPOINTS.GET_ALL, { params: { page, per_page: 20 } }),
+      axiosClient.get(AUDIT_ENDPOINTS.GET_ALL, {
+        params: {
+          page,
+          per_page: 20,
+          action: actionFilter !== "all" ? actionFilter : undefined,
+        },
+      }),
   });
 
-  const logs = response?.data?.data ?? [];
-  const totalItems = response?.data?.total ?? 0;
-  const totalPages = response?.data?.totalPages ?? 1;
+  const auditData = response?.data;
+  const logs = auditData?.data.data ?? [];
+  const meta = auditData?.data.meta;
+  const totalItems = meta?.total ?? 0;
+  const totalPages = meta?.pageCount ?? 1;
+
+  // Client-side search filter on visible results
+  const filteredLogs = searchQuery
+    ? logs.filter(
+        (log: AuditLogEntry) =>
+          log.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          log.entity.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          log.userEmail?.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
+    : logs;
 
   if (error) {
     return (
@@ -96,7 +125,7 @@ export default function AuditLogPage() {
           { label: "Audit Logs" },
         ]}
         actions={
-          <Button variant="outline">
+          <Button variant="outline" disabled>
             <Download className="mr-2 h-4 w-4" />
             Export CSV
           </Button>
@@ -106,29 +135,30 @@ export default function AuditLogPage() {
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-center bg-card p-4 rounded-lg border">
         <div className="relative w-full sm:w-[300px]">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search logs..." className="pl-8" />
+          <Input
+            placeholder="Search logs..."
+            className="pl-8"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
-          <Select defaultValue="all">
+          <Select
+            value={actionFilter}
+            onValueChange={(v) => {
+              setActionFilter(v);
+              setPage(1);
+            }}
+          >
             <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Event Type" />
+              <SelectValue placeholder="Action" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Events</SelectItem>
-              <SelectItem value="auth">Authentication</SelectItem>
-              <SelectItem value="data">Data Changes</SelectItem>
-              <SelectItem value="system">System</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select defaultValue="all">
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="success">Success</SelectItem>
-              <SelectItem value="warning">Warning</SelectItem>
-              <SelectItem value="error">Error</SelectItem>
+              <SelectItem value="all">All Actions</SelectItem>
+              <SelectItem value="LOGIN">Login</SelectItem>
+              <SelectItem value="LOGOUT">Logout</SelectItem>
+              <SelectItem value="EXAM_PUBLISH">Exam Publish</SelectItem>
+              <SelectItem value="PAYMENT">Payment</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -142,7 +172,7 @@ export default function AuditLogPage() {
                 <Skeleton key={i} className="h-12 w-full" />
               ))}
             </div>
-          ) : logs.length === 0 ? (
+          ) : filteredLogs.length === 0 ? (
             <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
               No audit logs found.
             </div>
@@ -152,56 +182,56 @@ export default function AuditLogPage() {
                 <TableRow>
                   <TableHead>Timestamp</TableHead>
                   <TableHead>Action</TableHead>
+                  <TableHead>Entity</TableHead>
                   <TableHead>User</TableHead>
                   <TableHead>Role</TableHead>
-                  <TableHead>IP Address</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Details</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {logs.map((log) => (
+                {filteredLogs.map((log) => (
                   <TableRow key={log.id}>
                     <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
                       <div className="flex flex-col">
-                        <span>{format(new Date(log.timestamp), "MMM d, yyyy")}</span>
-                        <span>{format(new Date(log.timestamp), "HH:mm:ss")}</span>
+                        <span>
+                          {format(new Date(log.createdAt), "MMM d, yyyy")}
+                        </span>
+                        <span>
+                          {format(new Date(log.createdAt), "HH:mm:ss")}
+                        </span>
                       </div>
                     </TableCell>
-                    <TableCell className="font-medium">{log.action}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="font-mono text-xs">
+                        {log.action}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm">{log.entity}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <User className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-xs">{log.user}</span>
+                        <span className="text-xs">
+                          {log.userEmail ?? log.userId}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-xs font-normal">
-                        {log.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {log.ip}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={log.status === "error" ? "destructive" : "secondary"}
-                        className={
-                          log.status === "success"
-                            ? "bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400"
-                            : log.status === "warning"
-                              ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400"
-                              : ""
-                        }
-                      >
-                        {log.status}
-                      </Badge>
+                      {log.userRole ? (
+                        <Badge
+                          variant="secondary"
+                          className="text-xs font-normal"
+                        >
+                          {log.userRole}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                     <TableCell
                       className="text-muted-foreground text-xs max-w-[200px] truncate"
-                      title={log.details}
+                      title={log.detail ?? ""}
                     >
-                      {log.details}
+                      {log.detail ?? "—"}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -213,7 +243,7 @@ export default function AuditLogPage() {
 
       <div className="flex items-center justify-between">
         <div className="text-sm text-muted-foreground">
-          Showing {logs.length} of {totalItems} logs
+          Showing {filteredLogs.length} of {totalItems} logs
         </div>
         <div className="flex gap-2">
           <Button

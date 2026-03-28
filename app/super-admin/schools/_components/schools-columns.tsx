@@ -12,6 +12,7 @@ import {
   Ban,
   Check,
   Pencil,
+  Clock,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -25,15 +26,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { Tenant } from "@/types";
+import { TenantListItem } from "@/types";
 import { formatDate } from "@/lib/format";
 
 interface ActionsProps {
-  school: Tenant;
-  onEdit: (school: Tenant) => void;
+  school: TenantListItem;
+  onEdit: (school: TenantListItem) => void;
 }
 
+const STATUS_CONFIG: Record<string, { label: string; icon: typeof CheckCircle2; className: string }> = {
+  ACTIVE: { label: "Active", icon: CheckCircle2, className: "bg-green-600 hover:bg-green-700 text-white" },
+  TRIAL: { label: "Trial", icon: Clock, className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
+  CANCELLED: { label: "Cancelled", icon: XCircle, className: "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400" },
+  EXPIRED: { label: "Expired", icon: XCircle, className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" },
+};
+
 const ActionsCell = ({ school, onEdit }: ActionsProps) => {
+  const isActive = school.status === "ACTIVE";
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -60,17 +69,15 @@ const ActionsCell = ({ school, onEdit }: ActionsProps) => {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          className={
-            school.status === "Active" ? "text-red-600" : "text-green-600"
-          }
+          className={isActive ? "text-red-600" : "text-green-600"}
         >
-          {school.status === "Active" ? (
+          {isActive ? (
             <>
-              <Ban className="mr-2 h-4 w-4" /> Suspend Tenant
+              <Ban className="mr-2 h-4 w-4" /> Suspend School
             </>
           ) : (
             <>
-              <Check className="mr-2 h-4 w-4" /> Activate Tenant
+              <Check className="mr-2 h-4 w-4" /> Activate School
             </>
           )}
         </DropdownMenuItem>
@@ -80,8 +87,8 @@ const ActionsCell = ({ school, onEdit }: ActionsProps) => {
 };
 
 export const schoolsColumns = (
-  onEdit: (school: Tenant) => void,
-): ColumnDef<Tenant>[] => [
+  onEdit: (school: TenantListItem) => void,
+): ColumnDef<TenantListItem>[] => [
   {
     accessorKey: "name",
     header: "School Name",
@@ -103,13 +110,14 @@ export const schoolsColumns = (
     header: "Status",
     cell: ({ row }) => {
       const status = row.getValue("status") as string;
-      return status === "Active" ? (
-        <Badge variant="default" className="bg-green-600 hover:bg-green-700">
-          <CheckCircle2 className="mr-1 h-3 w-3" /> Active
-        </Badge>
-      ) : (
-        <Badge variant="destructive">
-          <XCircle className="mr-1 h-3 w-3" /> {status}
+      const config = STATUS_CONFIG[status];
+      if (!config) {
+        return <Badge variant="outline">{status ?? "—"}</Badge>;
+      }
+      const Icon = config.icon;
+      return (
+        <Badge variant="outline" className={config.className}>
+          <Icon className="mr-1 h-3 w-3" /> {config.label}
         </Badge>
       );
     },
@@ -119,14 +127,17 @@ export const schoolsColumns = (
     header: "Plan",
     cell: ({ row }) => (
       <Badge variant="outline" className="capitalize">
-        {row.getValue("plan")}
+        {row.getValue("plan") ?? "—"}
       </Badge>
     ),
   },
   {
     accessorKey: "trialEndAt",
     header: "Expiry",
-    cell: ({ row }) => formatDate(row.getValue("trialEndAt")),
+    cell: ({ row }) => {
+      const val = row.getValue("trialEndAt") as string | null;
+      return val ? formatDate(val) : "—";
+    },
   },
   {
     id: "actions",

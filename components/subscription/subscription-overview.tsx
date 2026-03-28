@@ -148,20 +148,20 @@ export function SubscriptionOverview({
   if (!subscription) return null;
 
   const status = statusConfig[subscription.status] ?? statusConfig.active;
-  const periodEnd = new Date(subscription.currentPeriodEnd);
-  const daysRemaining = differenceInDays(periodEnd, new Date());
-  const isExpiring = daysRemaining <= 14 && daysRemaining > 0;
-  const isExpired = isPast(periodEnd) || subscription.status === "expired";
-
-  // Trial-specific calculations
   const isTrial = subscription.status === "trial";
+  const periodEnd = subscription.periodEnd;
+  const periodStart = subscription.periodStart;
+  const daysRemaining = periodEnd ? differenceInDays(periodEnd, new Date()) : 0;
+  const isExpiring = !isTrial && daysRemaining <= 14 && daysRemaining > 0;
+  const isExpired =
+    (periodEnd ? isPast(periodEnd) : false) ||
+    subscription.status === "expired";
+
   let trialDaysLeft = 0;
   let trialProgress = 0;
-  if (isTrial && subscription.trialEndAt) {
-    const trialEnd = new Date(subscription.trialEndAt);
-    trialDaysLeft = Math.max(0, differenceInDays(trialEnd, new Date()));
-    const trialStart = new Date(subscription.createdAt);
-    const totalTrialDays = differenceInDays(trialEnd, trialStart);
+  if (isTrial && periodEnd && periodStart) {
+    trialDaysLeft = Math.max(0, differenceInDays(periodEnd, new Date()));
+    const totalTrialDays = differenceInDays(periodEnd, periodStart);
     trialProgress =
       totalTrialDays > 0
         ? ((totalTrialDays - trialDaysLeft) / totalTrialDays) * 100
@@ -261,11 +261,8 @@ export function SubscriptionOverview({
               <span>
                 Current period:{" "}
                 <span className="font-medium text-foreground">
-                  {format(
-                    new Date(subscription.currentPeriodStart),
-                    "MMM d, yyyy",
-                  )}{" "}
-                  — {format(periodEnd, "MMM d, yyyy")}
+                  {format(new Date(subscription.periodStart), "MMM d, yyyy")} —{" "}
+                  {format(periodEnd, "MMM d, yyyy")}
                 </span>
               </span>
             </div>
@@ -306,19 +303,19 @@ export function SubscriptionOverview({
             <UsageMeter
               label="Students"
               icon={<Users className="h-4 w-4" />}
-              used={subscription.usage.students}
+              used={subscription.usage?.students ?? 0}
               max={subscription.plan.maxStudents}
             />
             <UsageMeter
               label="Staff"
               icon={<UserCog className="h-4 w-4" />}
-              used={subscription.usage.staff}
+              used={subscription.usage?.staff ?? 0}
               max={subscription.plan.maxStaff}
             />
             <UsageMeter
               label="Storage"
               icon={<HardDrive className="h-4 w-4" />}
-              used={subscription.usage.storageUsed}
+              used={subscription.usage?.storageUsed ?? 0}
               max={subscription.plan.maxStorage}
               unit="GB"
             />

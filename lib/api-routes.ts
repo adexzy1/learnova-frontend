@@ -22,6 +22,7 @@ export const SESSION_ENDPOINTS = {
   CREATE_SESSION: "/academics/session",
   UPDATE_SESSION: "/academics/session/:id",
   DELETE_SESSION: "/academics/session/:id",
+  SETUP_ACADEMIC_YEAR: "/academics/session/setup",
 };
 
 export const TERM_ENDPOINTS = {
@@ -34,6 +35,7 @@ export const TERM_ENDPOINTS = {
 };
 
 export const CLASS_ENDPOINTS = {
+  SETUP_CLASS_STRUCTURE: "/academics/class/setup",
   GET_ALL_CLASSES: "/academics/class",
   GET_SELECTABLE_CLASSES: "/academics/class/select",
   GET_ALL_CLASS_ARMS: "/academics/class/arm",
@@ -84,6 +86,8 @@ export const TENANT_ENDPOINTS = {
   UPDATE_TENANT: "/tenant/:id",
   DELETE_TENANT: "/tenant/:id",
   GET_STATS: "/tenant/stats",
+  GET_ANALYTICS: "/tenant/analytics",
+  GET_TENANT_USERS: "/tenant/:id/users",
 };
 
 export const PLAN_ENDPOINTS = {
@@ -105,10 +109,6 @@ export const SUBSCRIPTION_ENDPOINTS = {
 
 export const ONBOARDING_ENDPOINTS = {
   CHANGE_DEFAULT_PASSWORD: "/onboarding/change-default-password",
-  UPDATE_SCHOOL_PROFILE: "/onboarding/update-school-profile",
-  SET_ACADEMIC_YEAR: "/onboarding/setup-academic-year",
-  ADD_CLASS_STRUCTURE: "/onboarding/setup-class-structure",
-  SET_GRADING_SYSTEM: "/onboarding/setup-grading-system",
   SET_PAYMENT_METHOD: "/onboarding/payment-method",
   VERIFY_PAYMENT: "/onboarding/verify-payment",
 };
@@ -123,6 +123,7 @@ export const AUTH_ENDPOINTS = {
 
 export const GRADING_ENDPOINTS = {
   GET_ALL: "/academics/grading-system",
+  SETUP_GRADING_SYSTEM: "/academics/grading-system/setup",
   GET_BY_ID: "/academics/grading-system/:id",
   CREATE: "/academics/grading-system",
   UPDATE: "/academics/grading-system/:id",
@@ -234,11 +235,6 @@ export const REPORTS_ENDPOINTS = {
 export const AUDIT_ENDPOINTS = {
   GET_ALL: "/audit",
   GET_BY_ID: "/audit/:id",
-};
-
-export const SUPER_ADMIN_CONFIG_ENDPOINTS = {
-  GET: "/super-admin/config",
-  UPDATE: "/super-admin/config",
 };
 
 export const ASSIGNMENTS_ENDPOINTS = {

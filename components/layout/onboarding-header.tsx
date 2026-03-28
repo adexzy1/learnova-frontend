@@ -16,10 +16,11 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/providers/app-auth-provider";
 import axiosClient from "@/lib/axios-client";
-import { toast } from "sonner";
+import { useTenant } from "@/providers/tenant-provider";
 
 export function OnboardingHeader() {
   const { user } = useAuth();
+  const { tenant } = useTenant();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -38,9 +39,7 @@ export function OnboardingHeader() {
     return `${firstName?.charAt(0) || ""}${lastName?.charAt(0) || ""}`.toUpperCase();
   };
 
-  const schoolName = user?.isSystem
-    ? "Super Admin"
-    : user?.tenantUsers?.[0]?.tenant?.name || "School";
+  const schoolName = user?.isSystem ? "Super Admin" : tenant?.schoolName;
 
   return (
     <header className="sticky top-0 z-50 flex h-16 items-center border-b bg-background px-4 lg:px-8">

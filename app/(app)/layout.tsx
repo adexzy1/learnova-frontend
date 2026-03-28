@@ -8,16 +8,19 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const session = await getUserSession();
+  console.log("session", session);
 
   if (!session) {
     redirect("/");
   }
 
-  switch (session.nextAction) {
+  switch (session.data.nextAction) {
     case "COMPLETE_ONBOARDING":
       redirect("/onboarding");
+      break;
     case "CHANGE_PASSWORD":
       redirect("/onboarding/change-password");
+      break;
     default:
       break;
   }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Tenant, PaginatedResponse } from "@/types";
+import { TenantListItem, PaginatedResponse } from "@/types";
 import { queryKeys } from "@/app/constants/queryKeys";
 import { TENANT_ENDPOINTS } from "@/lib/api-routes";
 import axiosClient from "@/lib/axios-client";
@@ -10,7 +10,7 @@ import { AxiosResponse } from "axios";
 
 export function useSchoolsService() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editingSchool, setEditingSchool] = useState<Tenant | null>(null);
+  const [editingSchool, setEditingSchool] = useState<TenantListItem | null>(null);
 
   // Pagination and Search State
   const [pagination, setPagination] = useState({
@@ -20,7 +20,7 @@ export function useSchoolsService() {
   const [search, setSearch] = useState("");
 
   const { data: tenantsResponse, isLoading } = useQuery<
-    AxiosResponse<PaginatedResponse<Tenant>>
+    AxiosResponse<PaginatedResponse<TenantListItem>>
   >({
     queryKey: [queryKeys.TENANTS, pagination, search],
     queryFn: async () =>
@@ -33,10 +33,10 @@ export function useSchoolsService() {
       }),
   });
 
-  const tenants = tenantsResponse?.data?.data || [];
-  const pageCount = tenantsResponse?.data?.meta?.totalPages || 0;
+  const tenants = tenantsResponse?.data?.data.data || [];
+  const pageCount = tenantsResponse?.data?.data.meta.pageCount || 0;
 
-  const handleEdit = (school: Tenant) => {
+  const handleEdit = (school: TenantListItem) => {
     setEditingSchool(school);
     setIsCreateOpen(true);
   };

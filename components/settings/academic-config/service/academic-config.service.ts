@@ -34,13 +34,15 @@ export const useUpdateAcademicConfig = (data?: AcademicConfig) => {
     resolver: zodResolver(academicConfigSchema),
   });
 
-  const session = useQuery<AxiosResponse<Pick<Session, "id" | "name">[]>>({
+  const session = useQuery<
+    AxiosResponse<{ data: Pick<Session, "id" | "name">[] }>
+  >({
     queryKey: [queryKeys.SESSION],
     queryFn: async () =>
       await axiosClient.get(SESSION_ENDPOINTS.GET_SELECTABLE_SESSIONS),
   });
 
-  const term = useQuery<AxiosResponse<Pick<Term, "id" | "name">[]>>({
+  const term = useQuery<AxiosResponse<{ data: Pick<Term, "id" | "name">[] }>>({
     queryKey: [queryKeys.TERM],
     queryFn: async () =>
       await axiosClient.get(TERM_ENDPOINTS.GET_SELECTABLE_TERMS),
@@ -79,8 +81,8 @@ export const useUpdateAcademicConfig = (data?: AcademicConfig) => {
   return {
     updateConfig: handleSave,
     ...response,
-    sessions: session.data?.data || [],
-    terms: term.data?.data || [],
+    sessions: session.data?.data.data || [],
+    terms: term.data?.data.data || [],
     form,
   };
 };

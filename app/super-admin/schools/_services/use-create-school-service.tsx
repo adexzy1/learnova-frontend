@@ -1,5 +1,5 @@
 import { queryKeys } from "@/app/constants/queryKeys";
-import { Plan, Tenant } from "@/types";
+import { Plan, TenantListItem } from "@/types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -29,7 +29,7 @@ type TenantFormData = z.infer<typeof tenantSchema>;
 
 interface Args {
   onOpenChange: (open: boolean) => void;
-  initialData?: Tenant | null;
+  initialData?: TenantListItem | null;
 }
 
 export const UseCreateSchoolService = ({ onOpenChange, initialData }: Args) => {
@@ -56,14 +56,14 @@ export const UseCreateSchoolService = ({ onOpenChange, initialData }: Args) => {
       form.reset({
         name: initialData.name,
         domainName: initialData.domainName,
-        planId: initialData.planId,
-        accountName: initialData.accountName,
-        firstName: initialData.firstName,
-        lastName: initialData.lastName,
-        bankCode: initialData.bankCode,
-        accountNumber: initialData.accountNumber,
-        email: initialData.email,
-        phone: initialData.phone,
+        planId: "",
+        accountName: "",
+        firstName: "",
+        lastName: "",
+        bankCode: "",
+        accountNumber: "",
+        email: "",
+        phone: "",
       });
     } else {
       form.reset({
@@ -90,7 +90,7 @@ export const UseCreateSchoolService = ({ onOpenChange, initialData }: Args) => {
     mutationFn: async (data: TenantFormData) => {
       if (initialData) {
         const res = await axiosClient.patch(
-          TENANT_ENDPOINTS.UPDATE_TENANT.replace(":id", initialData.id),
+          TENANT_ENDPOINTS.UPDATE_TENANT.replace(":id", String(initialData.id)),
           data,
         );
         return res;

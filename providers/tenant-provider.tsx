@@ -7,26 +7,31 @@ interface TenantProviderProps {
   children: React.ReactNode
 }
 
-const defaultBranding: TenantBranding = {
-  logo: '/logo.png',
-  primaryColor: '#2563eb', // blue-600
-  secondaryColor: '#1e40af', // blue-800
-}
-
-const defaultAcademicConfig: AcademicConfig = {
-  currentSessionId: '',
-  currentTermId: '',
-  gradingSystem: 'default',
-  attendanceType: 'daily',
-  promotionRules: {},
-}
-
 const defaultTenant: TenantContext = {
-  tenantId: '',
-  tenantSlug: '',
+  id: 0,
+  tenantId: 0,
+  name: 'School Management System',
+  slug: '',
+  status: 1,
   schoolName: 'School Management System',
-  branding: defaultBranding,
-  academicConfig: defaultAcademicConfig,
+  email: null,
+  phone: null,
+  address: null,
+  website: null,
+  description: null,
+  currentSessionId: null,
+  currentTermId: null,
+  autoPromoteStudents: false,
+  lockPastResults: true,
+  primaryColor: '#2563eb', // blue-600
+  logoUrl: '/logo.png',
+  emailNotificationsEnabled: true,
+  smsAlertsEnabled: false,
+  inAppNotificationsEnabled: true,
+  onboardingStep: 'schoolProfile',
+  onboardingCompletedAt: null,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
 }
 
 const TenantContextValue = createContext<{
@@ -58,38 +63,43 @@ export function TenantProvider({ children }: TenantProviderProps) {
       return
     }
 
-    // Simulate API call to fetch tenant configuration
     const fetchTenant = async () => {
       try {
-        // Mock API call - in production this would be:
-        // const response = await fetch(`/api/tenant/${subdomain}`)
-        // const data = await response.json()
+        const baseURL = process.env.NEXT_PUBLIC_API_URL ?? '/api/v1';
+        // We use a clean axios instance to avoid the default interceptors
+        // from axiosClient.ts so unauthenticated users aren't redirected to login
+        const axiosInstance = (await import('axios')).default;
+        const response = await axiosInstance.get(`${baseURL}/tenant/config`);
+        const resultData = response.data?.data || response.data;
         
-        // Mock tenant data based on subdomain
-        const mockTenant: TenantContext = {
-          tenantId: `tenant-${subdomain}`,
-          tenantSlug: subdomain,
-          schoolName: `${subdomain.charAt(0).toUpperCase() + subdomain.slice(1)} International School`,
-          branding: {
-            logo: '/logo.png',
-            primaryColor: '#2563eb',
-            secondaryColor: '#1e40af',
-          },
-          academicConfig: {
-            currentSessionId: 'session-2024-2025',
-            currentTermId: 'term-1',
-            gradingSystem: 'default',
-            attendanceType: 'daily',
-            promotionRules: {},
-          },
-        }
+        const tenantConfig: TenantContext = {
+          ...defaultTenant,
+          id: resultData.id || 0,
+          tenantId: resultData.tenantId || 0,
+          name: resultData.name || resultData.schoolName || 'School Management System',
+          slug: resultData.domainName || resultData.slug || subdomain,
+          status: resultData.tenantStatus ?? resultData.status ?? 1,
+          schoolName: resultData.schoolName || resultData.name || 'School Management System',
+          description: resultData.description || null,
+          primaryColor: resultData.primaryColor || '#2563eb',
+          logoUrl: resultData.logoUrl || '/logo.png',
+        };
 
-        setTenant(mockTenant)
-        setIsSuperAdmin(false)
+        setTenant(tenantConfig);
+        setIsSuperAdmin(false);
       } catch (error) {
-        console.error('Failed to fetch tenant:', error)
+        console.error('Failed to fetch tenant configuration:', error);
+        
+        // Fallback to mock behavior to prevent breaking the app if endpoint is unavailable
+        setTenant({
+          ...defaultTenant,
+          slug: subdomain,
+          name: `${subdomain.charAt(0).toUpperCase() + subdomain.slice(1)} International School`,
+          schoolName: `${subdomain.charAt(0).toUpperCase() + subdomain.slice(1)} International School`,
+        });
+        setIsSuperAdmin(false);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
     }
 
@@ -98,12 +108,15 @@ export function TenantProvider({ children }: TenantProviderProps) {
 
   // Apply branding CSS variables
   useEffect(() => {
-    if (tenant.branding) {
-      const root = document.documentElement
-      root.style.setProperty('--tenant-primary', tenant.branding.primaryColor)
-      root.style.setProperty('--tenant-secondary', tenant.branding.secondaryColor)
+    if (tenant.primaryColor) {
+      const root = document.documentElement;
+      root.style.setProperty('--tenant-primary', tenant.primaryColor);
+      
+      // Auto-compute a darker secondary color based on primary
+      // For now we just use a generic slightly darker shade or keep it simple
+      root.style.setProperty('--tenant-secondary', '#1e40af');
     }
-  }, [tenant.branding])
+  }, [tenant.primaryColor]);
 
   return (
     <TenantContextValue.Provider value={{ tenant, setTenant, isLoading, isSuperAdmin }}>

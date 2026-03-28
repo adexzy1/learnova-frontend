@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import type { NextAction, User } from "@/types";
+import { useState, useEffect } from "react";
+import type { NextAction, TenantContext, User } from "@/types";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Topbar } from "@/components/layout/topbar";
-import { AppAuthProvider } from "@/providers";
+import { AppAuthProvider, useTenant } from "@/providers";
 
 interface AppShellProps {
   user: User | null;
@@ -13,6 +13,7 @@ interface AppShellProps {
   activePersona?: string;
   nextAction?: NextAction;
   children: React.ReactNode;
+  tenant?: TenantContext;
 }
 
 export function AppShell({
@@ -22,9 +23,17 @@ export function AppShell({
   activePersona,
   nextAction,
   children,
+  tenant,
 }: AppShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const resolvedPermissions = permissions ?? user?.permissions ?? [];
+  const { setTenant } = useTenant();
+
+  useEffect(() => {
+    if (tenant) {
+      setTenant(tenant);
+    }
+  }, [tenant, setTenant]);
 
   return (
     <AppAuthProvider

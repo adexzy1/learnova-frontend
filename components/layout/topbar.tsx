@@ -41,16 +41,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 import { formatDistanceToNow } from "date-fns";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { AxiosResponse } from "axios";
 import { useTenant } from "@/providers/tenant-provider";
-// import { useAuth } from "@/providers/auth-provider";
 import { useOffline } from "@/hooks/use-offline";
 import { MobileNav } from "./mobile-nav";
 import { useAuth } from "@/providers/app-auth-provider";
-import apiClient from "@/lib/api-client";
-import { NOTIFICATIONS_ENDPOINTS } from "@/lib/api-routes";
-import { queryKeys } from "@/app/constants/queryKeys";
+import useNotificationsService from "@/app/(app)/notifications/_service/useNotificationsService";
 import type { Notification } from "@/types";
 import { Separator } from "@/components/ui/separator";
 
@@ -119,32 +114,16 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
   const { user, personas, activePersona, switchPersona, isSwitchingPersona } =
     useAuth();
   const router = useRouter();
-  const queryClient = useQueryClient();
-  // const { tenant, isSuperAdmin } = useTenant()
-  // const { user, logout } = useAuth()
+  const { tenant } = useTenant();
   const { isOnline, unsyncedCount } = useOffline();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const { data: notificationsResponse } = useQuery<AxiosResponse<{ data: Notification[] }>>({
-    queryKey: [queryKeys.NOTIFICATIONS],
-    queryFn: () => apiClient.get(NOTIFICATIONS_ENDPOINTS.GET_ALL),
-    refetchInterval: 30_000,
-  });
-  const notifications = notificationsResponse?.data?.data ?? [];
-  const notifUnreadCount = notifications.filter((n) => !n.isRead).length;
-
-  const markReadMutation = useMutation({
-    mutationFn: (id: string) =>
-      apiClient.patch(NOTIFICATIONS_ENDPOINTS.MARK_READ.replace(":id", id)),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: [queryKeys.NOTIFICATIONS] }),
-  });
-
-  const markAllReadMutation = useMutation({
-    mutationFn: () => apiClient.patch(NOTIFICATIONS_ENDPOINTS.MARK_ALL_READ),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: [queryKeys.NOTIFICATIONS] }),
-  });
+  const {
+    notifications,
+    unreadCount: notifUnreadCount,
+    markReadMutation,
+    markAllReadMutation,
+  } = useNotificationsService();
 
   const handleLogout = async () => {
     router.push("/");
@@ -300,7 +279,7 @@ export function Topbar({ onToggleSidebar }: TopbarProps) {
                 .sort(
                   (a, b) =>
                     new Date(b.createdAt).getTime() -
-                    new Date(a.createdAt).getTime()
+                    new Date(a.createdAt).getTime(),
                 )
                 .slice(0, 5)
                 .map((n) => {

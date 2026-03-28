@@ -18,7 +18,6 @@ import {
   useVerifyPayment,
 } from "./service/subscription.service";
 import type { SubscriptionPlan, PaystackPaymentResponse } from "@/types";
-import Paystack from "@paystack/inline-js";
 
 interface PaymentDialogProps {
   open: boolean;
@@ -81,7 +80,9 @@ export function PaymentDialog({
       const paymentData = await initPayment.mutateAsync({
         planId: plan.id,
       });
-      const paystack = new Paystack();
+      const PaystackModule = await import("@paystack/inline-js");
+      const PaystackConstructor = PaystackModule.default as any;
+      const paystack = new PaystackConstructor();
 
       paystack.resumeTransaction(paymentData.access_code, {
         onSuccess: (response: PaystackPaymentResponse) => {

@@ -64,7 +64,7 @@ export default function TenantManagementPage() {
             </div>
             <Button onClick={() => setIsCreateOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
-              Add Tenant
+              Add School
             </Button>
           </div>
           {isLoading ? (

@@ -22,11 +22,12 @@ const Payment = ({ goBack, setStep }: PaymentProps) => {
   const handlePayment = async () => {
     try {
       const paymentData = await initiatePayment();
+      console.log("paymentData", paymentData);
       const PaystackModule = await import("@paystack/inline-js");
       const PaystackConstructor = PaystackModule.default as any;
       const paystack = new PaystackConstructor();
 
-      paystack.resumeTransaction(paymentData.data.access_code, {
+      paystack.resumeTransaction(paymentData?.data?.data?.access_code, {
         onSuccess: async (response: PaystackPaymentResponse) => {
           await verifyPayment(response.reference);
           setStep(6);

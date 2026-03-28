@@ -4,51 +4,37 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/app/constants/queryKeys";
 import type { Subscription, SubscriptionPlan, BillingRecord } from "@/types";
 import type {
-  PlanChangeRequest,
   PaymentInitRequest,
   PaymentInitResponse,
   PaymentVerifyRequest,
 } from "../types";
-import { MOCK_SUBSCRIPTION, MOCK_PLANS, MOCK_BILLING_HISTORY } from "../types";
 
-// Toggle this to false when the real API is ready
-const USE_MOCK = true;
-
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
+// ── GET /subscription ────────────────────────────────────────────────────────
 export const useSubscription = () => {
-  const response = useQuery<Subscription>({
+  const response = useQuery<Subscription | null>({
     queryKey: [queryKeys.SUBSCRIPTION],
     queryFn: async () => {
-      if (USE_MOCK) {
-        await delay(600);
-        return MOCK_SUBSCRIPTION;
-      }
-      const resp = await axiosClient.get(
-        SUBSCRIPTION_ENDPOINTS.GET_SUBSCRIPTION,
-      );
-      return resp.data;
+      const resp = await axiosClient.get(SUBSCRIPTION_ENDPOINTS.GET_SUBSCRIPTION);
+      // Backend wraps in { success, data } via ResponseTransformInterceptor
+      return resp.data.data ?? null;
     },
   });
 
   return {
-    subscription: response.data,
+    subscription: response.data ?? undefined,
     isLoading: response.isLoading,
     isError: response.isError,
     error: response.error,
   };
 };
 
+// ── GET /subscription/plan ───────────────────────────────────────────────────
 export const useSubscriptionPlans = () => {
   const response = useQuery<SubscriptionPlan[]>({
     queryKey: [queryKeys.SUBSCRIPTION_PLANS],
     queryFn: async () => {
-      if (USE_MOCK) {
-        await delay(400);
-        return MOCK_PLANS;
-      }
       const resp = await axiosClient.get(SUBSCRIPTION_ENDPOINTS.GET_PLANS);
-      return resp.data;
+      return resp.data.data ?? [];
     },
   });
 
@@ -60,18 +46,13 @@ export const useSubscriptionPlans = () => {
   };
 };
 
+// ── GET /subscription/billing ────────────────────────────────────────────────
 export const useBillingHistory = () => {
   const response = useQuery<BillingRecord[]>({
     queryKey: [queryKeys.BILLING_HISTORY],
     queryFn: async () => {
-      if (USE_MOCK) {
-        await delay(500);
-        return MOCK_BILLING_HISTORY;
-      }
-      const resp = await axiosClient.get(
-        SUBSCRIPTION_ENDPOINTS.GET_BILLING_HISTORY,
-      );
-      return resp.data;
+      const resp = await axiosClient.get(SUBSCRIPTION_ENDPOINTS.GET_BILLING_HISTORY);
+      return resp.data.data ?? [];
     },
   });
 
@@ -83,20 +64,16 @@ export const useBillingHistory = () => {
   };
 };
 
+// ── POST /subscription/change-plan ───────────────────────────────────────────
 export const useChangePlan = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: PlanChangeRequest) => {
-      if (USE_MOCK) {
-        await delay(800);
-        return { success: true };
-      }
-      const resp = await axiosClient.post(
-        SUBSCRIPTION_ENDPOINTS.CHANGE_PLAN,
-        data,
-      );
-      return resp.data;
+    mutationFn: async (planId: string) => {
+      const resp = await axiosClient.post(SUBSCRIPTION_ENDPOINTS.CHANGE_PLAN, {
+        planId,
+      });
+      return resp.data.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [queryKeys.SUBSCRIPTION] });
@@ -105,31 +82,30 @@ export const useChangePlan = () => {
   });
 };
 
+// ── POST /subscription/initialize-payment ────────────────────────────────────
 export const useInitializePayment = () => {
   return useMutation<PaymentInitResponse, Error, PaymentInitRequest>({
     mutationFn: async (data) => {
       const resp = await axiosClient.post(SUBSCRIPTION_ENDPOINTS.INIT_PAYMENT, {
         planId: data.planId,
       });
+      // Backend: { success, data: { authorization_url, access_code, reference } }
       return resp.data.data;
     },
   });
 };
 
+// ── POST /subscription/payment/verify ────────────────────────────────────────
 export const useVerifyPayment = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: PaymentVerifyRequest) => {
-      if (USE_MOCK) {
-        await delay(600);
-        return { success: true, status: "paid" };
-      }
       const resp = await axiosClient.post(
         SUBSCRIPTION_ENDPOINTS.VERIFY_PAYMENT,
         data,
       );
-      return resp.data;
+      return resp.data.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [queryKeys.SUBSCRIPTION] });

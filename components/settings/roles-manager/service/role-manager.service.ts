@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { UseFormSetError } from "react-hook-form";
 
 export const useAllRoles = () => {
-  const response = useQuery<Role[]>({
+  const response = useQuery<{ data: Role[] }>({
     queryKey: ["roles"],
     queryFn: async () => {
       const resp = await axiosClient.get(ROLES_ENDPOINTS.GET_ALL_ROLES);
@@ -14,7 +14,7 @@ export const useAllRoles = () => {
     },
   });
   return {
-    roles: response.data ?? [],
+    roles: response.data?.data ?? [],
     isLoading: response.isLoading,
     isError: response.isError,
     error: response.error,
