@@ -515,16 +515,49 @@ export interface Notification {
   link?: string;
 }
 
-export interface Message {
+// Online Exam Portal Types
+export interface OnlineExam {
   id: string;
-  senderId: string;
-  senderName: string;
-  recipientIds: string[];
-  subject: string;
-  content: string;
-  status: "sent" | "delivered" | "read";
-  sentAt: string;
-  readAt?: string;
+  title: string;
+  subjectName: string;
+  durationMinutes: number;
+  windowStart: string;
+  windowEnd: string;
+  status: "upcoming" | "open" | "submitted" | "closed";
+  totalQuestions: number;
+  totalMarks: number;
+  instructions?: string;
+  attempt?: OnlineExamAttempt;
+}
+
+export interface OnlineExamQuestion {
+  id: string;
+  order: number;
+  type: "mcq" | "essay";
+  text: string;
+  marks: number;
+  options?: OnlineExamOption[];
+}
+
+export interface OnlineExamOption {
+  id: string;
+  text: string;
+}
+
+export interface OnlineExamAttempt {
+  id: string;
+  examId: string;
+  startedAt: string;
+  submittedAt?: string;
+  expiresAt: string;
+  answers: OnlineExamAnswer[];
+}
+
+export interface OnlineExamAnswer {
+  questionId: string;
+  mcqOptionId?: string;
+  essayContent?: string;
+  lastSavedAt?: string;
 }
 
 // Discipline Types

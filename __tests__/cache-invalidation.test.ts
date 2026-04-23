@@ -17,7 +17,6 @@ type ResourceType =
   | "admissions"
   | "invoices"
   | "payments"
-  | "messages"
   | "notifications";
 
 const RESOURCE_QUERY_KEYS: Record<ResourceType, string> = {
@@ -31,7 +30,6 @@ const RESOURCE_QUERY_KEYS: Record<ResourceType, string> = {
   "admissions": queryKeys.ADMISSIONS,
   "invoices": queryKeys.INVOICES,
   "payments": queryKeys.PAYMENTS,
-  "messages": queryKeys.MESSAGES,
   "notifications": queryKeys.NOTIFICATIONS,
 };
 

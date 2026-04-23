@@ -49,7 +49,6 @@ export function StaffForm({
   isEdit = false,
 }: StaffFormProps) {
   const roles = useSelectableRoles();
-
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "assignments",
@@ -178,10 +177,7 @@ export function StaffForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Role</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a role" />
@@ -196,8 +192,8 @@ export function StaffForm({
                       </SelectContent>
                     </Select>
                     <FormDescription>
-                      The role determines what permissions this staff member will
-                      have in the system.
+                      The role determines what permissions this staff member
+                      will have in the system.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -240,8 +236,8 @@ export function StaffForm({
               <div>
                 <CardTitle>Class & Subject Assignments</CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Assign this staff member to teach subjects in specific classes.
-                  You can also do this later from the staff profile.
+                  Assign this staff member to teach subjects in specific
+                  classes. You can also do this later from the staff profile.
                 </p>
               </div>
               <Button
@@ -263,10 +259,7 @@ export function StaffForm({
               ) : (
                 <div className="space-y-3">
                   {fields.map((field, index) => (
-                    <div
-                      key={field.id}
-                      className="flex items-start gap-3"
-                    >
+                    <div key={field.id} className="flex items-start gap-3">
                       <FormField
                         control={form.control}
                         name={`assignments.${index}.classArmId`}

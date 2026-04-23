@@ -26,6 +26,10 @@ export default function useNotificationsService() {
   >({
     queryKey: [queryKeys.NOTIFICATIONS],
     queryFn: () => apiClient.get(NOTIFICATIONS_ENDPOINTS.GET_ALL),
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    staleTime: Infinity,
   });
 
   const notifications = notificationsResponse?.data?.data ?? [];
@@ -65,10 +69,10 @@ export default function useNotificationsService() {
       }
     });
 
-    eventSource.onerror = () => {
-      // EventSource auto-reconnects; optionally refetch on reconnect
-      queryClient.invalidateQueries({ queryKey: [queryKeys.NOTIFICATIONS] });
-    };
+    // eventSource.onerror = () => {
+    //   // EventSource auto-reconnects; optionally refetch on reconnect
+    //   queryClient.invalidateQueries({ queryKey: [queryKeys.NOTIFICATIONS] });
+    // };
 
     return () => {
       eventSource.close();

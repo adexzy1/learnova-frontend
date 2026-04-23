@@ -211,12 +211,13 @@ export const FINANCE_ENDPOINTS = {
   INIT_PAYMENT: "/finance/invoices/:id/initialize-payment",
 };
 
-export const COMMUNICATIONS_ENDPOINTS = {
-  MESSAGES_GET: "/communications/messages",
-  MESSAGES_CREATE: "/communications/messages",
-  MESSAGES_MARK_READ: "/communications/messages/:id/read",
-  MESSAGES_REPLY: "/communications/messages/:id/reply",
-  MESSAGES_GET_BY_ID: "/communications/messages/:id",
+export const ONLINE_EXAM_ENDPOINTS = {
+  LIST: "/academics/online-exams",
+  GET_BY_ID: "/academics/online-exams/:id",
+  START: "/academics/online-exams/:id/start",
+  GET_ATTEMPT: "/academics/online-exams/:id/attempt",
+  AUTOSAVE: "/academics/online-exams/:id/attempts/:attemptId/autosave",
+  SUBMIT: "/academics/online-exams/:id/attempts/:attemptId/submit",
 };
 
 export const NOTIFICATIONS_ENDPOINTS = {

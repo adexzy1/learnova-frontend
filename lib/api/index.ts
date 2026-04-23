@@ -16,7 +16,6 @@ import type {
   AdmissionApplication,
   DisciplineIncident,
   Notification,
-  Message,
   PaginatedResponse,
   TableFilters,
 } from "@/types";
@@ -666,22 +665,6 @@ export async function fetchNotifications(): Promise<Notification[]> {
   ]);
 }
 
-export async function fetchMessages(): Promise<Message[]> {
-  return mockFetch([
-    {
-      id: "msg-1",
-      senderId: "staff-1",
-      senderName: "Sarah Williams",
-      recipientIds: ["user-3"],
-      subject: "Progress Report Discussion",
-      content:
-        "I would like to schedule a meeting to discuss your child's progress.",
-      status: "read",
-      sentAt: "2024-12-01T14:00:00Z",
-      readAt: "2024-12-01T16:30:00Z",
-    },
-  ]);
-}
 
 // ==================== DASHBOARD STATS ====================
 // Dashboard stats are now fetched via useDashboardService hook

@@ -8,7 +8,6 @@ import {
   CreditCard,
   Calendar,
   UserCog,
-  MessageSquare,
   AlertTriangle,
   BarChart3,
   Settings,
@@ -210,14 +209,8 @@ export const tenantNavigation: NavSection[] = [
     ],
   },
   {
-    title: "Communication",
+    title: "Student Welfare",
     items: [
-      {
-        title: "Messages",
-        href: "/communications/messages",
-        icon: MessageSquare,
-        permission: PERMISSIONS.COMMUNICATION_SEND,
-      },
       {
         title: "Discipline",
         href: "/discipline",
@@ -303,18 +296,8 @@ export const parentNavigation: NavSection[] = [
       },
     ],
   },
-  {
-    title: "Communication",
-    items: [
-      {
-        title: "Messages",
-        href: "/parent/messages",
-        icon: MessageSquare,
-        permission: PERMISSIONS.PORTAL_GUARDIAN,
-      },
-    ],
-  },
 ];
+
 
 // Student portal navigation
 export const studentNavigation: NavSection[] = [

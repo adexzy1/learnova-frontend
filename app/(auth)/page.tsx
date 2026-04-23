@@ -20,6 +20,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import axiosClient from "@/lib/axios-client";
+import { useTenant } from "@/providers";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -30,6 +31,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const { tenant } = useTenant();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
