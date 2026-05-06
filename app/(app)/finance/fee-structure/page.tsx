@@ -20,8 +20,8 @@ export default function FeeStructurePage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Fee Structure"
-        description="Manage fee structures for your school"
+        title="Fee Items"
+        description="Manage the fee catalog — pick items when generating invoices"
         breadcrumbs={[
           { label: "Dashboard", href: "/dashboard" },
           { label: "Finance", href: "/finance" },
@@ -30,18 +30,18 @@ export default function FeeStructurePage() {
         actions={
           <Button onClick={() => setDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            Add Fee Structure
+            Add Fee Item
           </Button>
         }
       />
 
       <Card>
         <CardHeader>
-          <CardTitle>Fee Structures</CardTitle>
+          <CardTitle>Fee Catalog</CardTitle>
           <CardDescription>
             {feeStructures.length > 0
-              ? `${feeStructures.length} fee structure${feeStructures.length > 1 ? "s" : ""} configured`
-              : "Configure the fees applicable to your students"}
+              ? `${feeStructures.length} fee item${feeStructures.length > 1 ? "s" : ""} in catalog`
+              : "Add fee items that can be selected when generating invoices"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -62,9 +62,9 @@ export default function FeeStructurePage() {
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-4">
                 <Landmark className="h-6 w-6 text-muted-foreground" />
               </div>
-              <p className="text-sm font-medium">No fee structures yet</p>
+              <p className="text-sm font-medium">No fee items yet</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Add your first fee structure to start billing students
+                Add fee items to your catalog — you&apos;ll pick them when generating invoices
               </p>
               <Button
                 variant="outline"
@@ -72,7 +72,7 @@ export default function FeeStructurePage() {
                 onClick={() => setDialogOpen(true)}
               >
                 <Plus className="mr-2 h-4 w-4" />
-                Add Fee Structure
+                Add Fee Item
               </Button>
             </div>
           ) : (

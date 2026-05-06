@@ -20,6 +20,7 @@ export interface GenerateInvoicesPayload {
   sessionId: string;
   dueDate?: string;
   studentId?: string;
+  sendEmail?: boolean;
 }
 
 export interface GenerateInvoicesResponse {
@@ -122,6 +123,20 @@ const useInvoicesService = () => {
     },
   });
 
+  const sendInvoiceMutation = useMutation<void, ApiError, string>({
+    mutationFn: (invoiceId: string) =>
+      apiClient
+        .post(FINANCE_ENDPOINTS.INVOICES_SEND.replace(":id", invoiceId))
+        .then(() => undefined),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [queryKeys.INVOICES] });
+      toast.success("Invoice sent to guardian");
+    },
+    onError: (err) => {
+      toast.error(err.message ?? "Failed to send invoice");
+    },
+  });
+
   const recordPaymentMutation = useMutation({
     mutationFn: (payload: CreatePaymentPayload) =>
       apiClient.post(FINANCE_ENDPOINTS.PAYMENTS_CREATE, payload),
@@ -174,6 +189,7 @@ const useInvoicesService = () => {
     generateMutation,
     deleteMutation,
     recordPaymentMutation,
+    sendInvoiceMutation,
     fetchInvoiceById,
     stats: {
       totalBilled: statsData?.totalBilled ?? 0,

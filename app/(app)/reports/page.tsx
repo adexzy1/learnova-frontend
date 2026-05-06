@@ -61,6 +61,7 @@ export default function ReportsPage() {
   const { attendanceData, feeData, performanceData, stats, isLoading } =
     useReportsService(selectedTermId || undefined);
 
+  console.log(attendanceData, "attendanceData");
   // Map performance data with colors
   const perfWithColors = performanceData.map((d) => ({
     name: d.grade,
@@ -124,13 +125,39 @@ export default function ReportsPage() {
               ) : (
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={attendanceData.map((d) => ({ name: d.date, present: d.rate, absent: 100 - d.rate }))}>
-                      <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
-                      <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}%`} />
+                    <BarChart
+                      data={attendanceData.map((d) => ({
+                        name: d.date,
+                        present: d.rate,
+                        absent: 100 - d.rate,
+                      }))}
+                    >
+                      <XAxis
+                        dataKey="name"
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(v) => `${v}%`}
+                      />
                       <Tooltip cursor={{ fill: "transparent" }} />
                       <Legend />
-                      <Bar dataKey="present" name="Present" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="absent" name="Absent" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                      <Bar
+                        dataKey="present"
+                        name="Present"
+                        fill="#22c55e"
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <Bar
+                        dataKey="absent"
+                        name="Absent"
+                        fill="#ef4444"
+                        radius={[4, 4, 0, 0]}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -151,13 +178,44 @@ export default function ReportsPage() {
               ) : (
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={feeData.map((d) => ({ name: d.className, paid: d.collected, unpaid: d.outstanding }))} layout="vertical">
-                      <XAxis type="number" fontSize={12} tickLine={false} axisLine={false} />
-                      <YAxis dataKey="name" type="category" fontSize={12} tickLine={false} axisLine={false} width={50} />
+                    <BarChart
+                      data={feeData.map((d) => ({
+                        name: d.className,
+                        paid: d.collected,
+                        unpaid: d.outstanding,
+                      }))}
+                      layout="vertical"
+                    >
+                      <XAxis
+                        type="number"
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                      />
+                      <YAxis
+                        dataKey="name"
+                        type="category"
+                        fontSize={12}
+                        tickLine={false}
+                        axisLine={false}
+                        width={50}
+                      />
                       <Tooltip cursor={{ fill: "transparent" }} />
                       <Legend />
-                      <Bar dataKey="paid" name="Paid" stackId="a" fill="#22c55e" radius={[0, 4, 4, 0]} />
-                      <Bar dataKey="unpaid" name="Unpaid" stackId="a" fill="#eab308" radius={[0, 4, 4, 0]} />
+                      <Bar
+                        dataKey="paid"
+                        name="Paid"
+                        stackId="a"
+                        fill="#22c55e"
+                        radius={[0, 4, 4, 0]}
+                      />
+                      <Bar
+                        dataKey="unpaid"
+                        name="Unpaid"
+                        stackId="a"
+                        fill="#eab308"
+                        radius={[0, 4, 4, 0]}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -168,7 +226,9 @@ export default function ReportsPage() {
           <Card className="md:col-span-2 lg:col-span-1">
             <CardHeader>
               <CardTitle>Academic Performance</CardTitle>
-              <CardDescription>Grade distribution across all subjects</CardDescription>
+              <CardDescription>
+                Grade distribution across all subjects
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {perfWithColors.length === 0 ? (
@@ -179,7 +239,15 @@ export default function ReportsPage() {
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie data={perfWithColors} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                      <Pie
+                        data={perfWithColors}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
                         {perfWithColors.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
@@ -201,29 +269,50 @@ export default function ReportsPage() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Average Attendance</p>
-                  <p className="text-2xl font-bold">{stats.avgAttendance.toFixed(1)}%</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Average Attendance
+                  </p>
+                  <p className="text-2xl font-bold">
+                    {stats.avgAttendance.toFixed(1)}%
+                  </p>
                 </div>
                 <div className="h-2 w-20 bg-green-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-green-500" style={{ width: `${Math.min(stats.avgAttendance, 100)}%` }} />
+                  <div
+                    className="h-full bg-green-500"
+                    style={{ width: `${Math.min(stats.avgAttendance, 100)}%` }}
+                  />
                 </div>
               </div>
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Fee Recovery</p>
-                  <p className="text-2xl font-bold">{stats.feeRecovery.toFixed(0)}%</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Fee Recovery
+                  </p>
+                  <p className="text-2xl font-bold">
+                    {stats.feeRecovery.toFixed(0)}%
+                  </p>
                 </div>
                 <div className="h-2 w-20 bg-yellow-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-yellow-500" style={{ width: `${Math.min(stats.feeRecovery, 100)}%` }} />
+                  <div
+                    className="h-full bg-yellow-500"
+                    style={{ width: `${Math.min(stats.feeRecovery, 100)}%` }}
+                  />
                 </div>
               </div>
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Pass Rate</p>
-                  <p className="text-2xl font-bold">{stats.passRate.toFixed(0)}%</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Pass Rate
+                  </p>
+                  <p className="text-2xl font-bold">
+                    {stats.passRate.toFixed(0)}%
+                  </p>
                 </div>
                 <div className="h-2 w-20 bg-blue-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-500" style={{ width: `${Math.min(stats.passRate, 100)}%` }} />
+                  <div
+                    className="h-full bg-blue-500"
+                    style={{ width: `${Math.min(stats.passRate, 100)}%` }}
+                  />
                 </div>
               </div>
             </CardContent>

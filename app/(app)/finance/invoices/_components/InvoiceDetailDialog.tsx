@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { format } from "date-fns";
-import { Printer } from "lucide-react";
+import { ExternalLink, Printer } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -78,42 +78,98 @@ export function InvoiceDetailDialog({
   const handlePrint = () => {
     if (!printRef.current) return;
     const printContent = printRef.current.innerHTML;
-    const win = window.open("", "_blank", "width=800,height=600");
+    const win = window.open("", "_blank", "width=820,height=700");
     if (!win) return;
-    win.document.write(`
-      <html>
-        <head>
-          <title>Invoice ${invoice?.invoiceNumber ?? ""}</title>
-          <style>
-            body { font-family: system-ui, -apple-system, sans-serif; padding: 32px; color: #111; }
-            table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-            th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
-            th { font-weight: 600; font-size: 13px; color: #6b7280; text-transform: uppercase; }
-            td { font-size: 14px; }
-            .text-right { text-align: right; }
-            .summary-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; }
-            .summary-row.total { font-weight: 700; font-size: 16px; border-top: 2px solid #111; padding-top: 8px; margin-top: 8px; }
-            .header { margin-bottom: 24px; }
-            .header h1 { font-size: 20px; margin: 0 0 4px; }
-            .header p { margin: 2px 0; font-size: 13px; color: #6b7280; }
-            .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
-            .badge-paid { background: #dcfce7; color: #15803d; }
-            .badge-unpaid { background: #f1f5f9; color: #475569; }
-            .badge-partial { background: #fef3c7; color: #b45309; }
-            .badge-overdue { background: #fee2e2; color: #b91c1c; }
-            @media print { body { padding: 16px; } }
-          </style>
-        </head>
-        <body>${printContent}</body>
-      </html>
-    `);
+
+    const paymentSection = invoice?.paymentLink
+      ? `<div class="payment-box">
+           <p class="payment-label">Pay this invoice online</p>
+           <a href="${invoice.paymentLink}" class="payment-btn">Pay Now</a>
+           <p class="payment-url">${invoice.paymentLink}</p>
+         </div>`
+      : "";
+
+    win.document.write(`<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Invoice ${invoice?.invoiceNumber ?? ""}</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        color: #111;
+        background: #fff;
+        padding: 40px;
+      }
+      /* ── header ── */
+      .inv-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
+      .inv-title { font-size: 32px; font-weight: 800; color: #2563eb; letter-spacing: -0.5px; }
+      .inv-number { font-size: 13px; color: #6b7280; font-family: monospace; margin-top: 4px; }
+      .school-name { font-size: 18px; font-weight: 700; }
+      /* ── divider ── */
+      .divider { border: none; border-top: 3px solid #2563eb; margin-bottom: 24px; }
+      /* ── meta grid ── */
+      .meta { display: flex; justify-content: space-between; margin-bottom: 28px; font-size: 13px; }
+      .meta-label { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: #9ca3af; margin-bottom: 4px; font-weight: 600; }
+      .meta-value { font-weight: 600; color: #111; }
+      .meta-right { text-align: right; }
+      .meta-right table { border-collapse: collapse; }
+      .meta-right td { padding: 2px 0; }
+      .meta-right td:first-child { color: #9ca3af; padding-right: 12px; font-size: 12px; }
+      .meta-right td:last-child { font-weight: 600; font-size: 13px; text-align: right; }
+      .due-red { color: #dc2626; }
+      /* ── items table ── */
+      table.items { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+      table.items th {
+        padding: 9px 14px; font-size: 11px; text-transform: uppercase;
+        letter-spacing: .06em; color: #6b7280; background: #f3f4f6;
+        border-bottom: 2px solid #e5e7eb; font-weight: 600;
+      }
+      table.items th:last-child, table.items td:last-child { text-align: right; }
+      table.items td { padding: 10px 14px; font-size: 13px; border-bottom: 1px solid #e5e7eb; }
+      table.items tr:nth-child(even) td { background: #f9fafb; }
+      /* ── totals ── */
+      .totals { display: flex; justify-content: flex-end; margin-top: 0; }
+      .totals table { border-collapse: collapse; min-width: 260px; }
+      .totals td { padding: 6px 14px; font-size: 13px; }
+      .totals td:last-child { text-align: right; white-space: nowrap; }
+      .totals .label { color: #6b7280; }
+      .totals .total-row td { border-top: 2px solid #dc2626; padding-top: 10px; font-size: 15px; font-weight: 700; }
+      .totals .total-row td:last-child { color: #dc2626; }
+      /* ── payment box ── */
+      .payment-box {
+        margin-top: 32px; border: 2px solid #2563eb; border-radius: 8px;
+        padding: 20px 24px; text-align: center;
+      }
+      .payment-label { font-size: 13px; color: #6b7280; margin-bottom: 12px; }
+      .payment-btn {
+        display: inline-block; background: #2563eb; color: #fff;
+        font-size: 14px; font-weight: 700; padding: 10px 28px;
+        border-radius: 6px; text-decoration: none; margin-bottom: 10px;
+      }
+      .payment-url { font-size: 11px; color: #6b7280; word-break: break-all; }
+      /* ── footer ── */
+      .footer { margin-top: 36px; padding-top: 16px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 11px; color: #9ca3af; }
+      @media print {
+        body { padding: 24px; }
+        .payment-btn { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      }
+    </style>
+  </head>
+  <body>
+    ${printContent}
+    ${paymentSection}
+    <div class="footer">This is an official invoice. Please keep it for your records.</div>
+  </body>
+</html>`);
     win.document.close();
     win.print();
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[560px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle>Invoice Details</DialogTitle>
@@ -135,25 +191,29 @@ export function InvoiceDetailDialog({
           </div>
         ) : invoice ? (
           <>
-            {/* Visible modal content */}
-            <div className="space-y-4">
-              <div className="flex items-start justify-between">
+            {/* ── Visible modal content (also used as print source) ── */}
+            <div ref={printRef}>
+              {/* Header */}
+              <div className="inv-header flex items-start justify-between">
                 <div>
-                  <p className="font-mono text-sm font-semibold">
+                  <p className="font-mono text-sm font-semibold text-muted-foreground">
                     {invoice.invoiceNumber}
                   </p>
-                  <p className="text-sm text-muted-foreground mt-0.5">
+                  <p className="text-base font-semibold mt-0.5">
                     {invoice.studentName || "Unknown Student"}
                     {invoice.admissionNumber && (
-                      <span className="ml-1">({invoice.admissionNumber})</span>
+                      <span className="text-muted-foreground font-normal ml-1.5 text-sm">
+                        ({invoice.admissionNumber})
+                      </span>
                     )}
                   </p>
                 </div>
                 {getStatusBadge(invoice.status)}
               </div>
 
-              <Separator />
+              <Separator className="my-4" />
 
+              {/* Items */}
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -164,9 +224,7 @@ export function InvoiceDetailDialog({
                 <TableBody>
                   {invoice.items.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell className="text-sm">
-                        {item.description}
-                      </TableCell>
+                      <TableCell className="text-sm">{item.description}</TableCell>
                       <TableCell className="text-right text-sm tabular-nums">
                         {formatCurrency(Number(item.amount))}
                       </TableCell>
@@ -175,7 +233,8 @@ export function InvoiceDetailDialog({
                 </TableBody>
               </Table>
 
-              <div className="space-y-1.5 text-sm">
+              {/* Totals */}
+              <div className="space-y-1.5 text-sm mt-4">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Total Amount</span>
                   <span className="font-semibold tabular-nums">
@@ -198,8 +257,9 @@ export function InvoiceDetailDialog({
                 )}
               </div>
 
-              <Separator />
+              <Separator className="my-4" />
 
+              {/* Dates */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-muted-foreground">Issue Date</p>
@@ -220,48 +280,26 @@ export function InvoiceDetailDialog({
               </div>
             </div>
 
-            {/* Hidden printable content */}
-            <div ref={printRef} className="hidden">
-              <div className="header">
-                <h1>Invoice {invoice.invoiceNumber}</h1>
-                <p>Student: {invoice.studentName || "Unknown"}{invoice.admissionNumber ? ` (${invoice.admissionNumber})` : ""}</p>
-                <p>
-                  Status: <span className={`badge badge-${invoice.status.toLowerCase()}`}>{invoice.status}</span>
+            {/* ── Payment link (shown in modal + included in print via JS) ── */}
+            {invoice.paymentLink && invoice.status !== "PAID" && (
+              <div className="mt-4 rounded-lg border-2 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-4 text-center space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Guardian can pay directly using the link below
                 </p>
-                <p>Issue Date: {invoice.createdAt ? format(new Date(invoice.createdAt), "MMM d, yyyy") : "—"}</p>
-                <p>Due Date: {invoice.dueDate ? format(new Date(invoice.dueDate), "MMM d, yyyy") : "—"}</p>
+                <a
+                  href={invoice.paymentLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-md transition-colors"
+                >
+                  Pay {formatCurrency(invoice.balance)} Now
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+                <p className="text-xs text-muted-foreground break-all">
+                  {invoice.paymentLink}
+                </p>
               </div>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Description</th>
-                    <th className="text-right">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {invoice.items.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.description}</td>
-                      <td className="text-right">{formatCurrency(Number(item.amount))}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div className="summary-row">
-                <span>Total Amount</span>
-                <span>{formatCurrency(invoice.totalAmount)}</span>
-              </div>
-              <div className="summary-row">
-                <span>Amount Paid</span>
-                <span>{formatCurrency(invoice.amountPaid)}</span>
-              </div>
-              {invoice.balance > 0 && (
-                <div className="summary-row total">
-                  <span>Balance Due</span>
-                  <span>{formatCurrency(invoice.balance)}</span>
-                </div>
-              )}
-            </div>
+            )}
           </>
         ) : null}
       </DialogContent>

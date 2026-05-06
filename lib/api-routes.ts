@@ -209,6 +209,9 @@ export const FINANCE_ENDPOINTS = {
   FEE_STRUCTURES_UPDATE: "/finance/fee-structures/:id",
   FEE_STRUCTURES_DELETE: "/finance/fee-structures/:id",
   INIT_PAYMENT: "/finance/invoices/:id/initialize-payment",
+  INVOICES_SEND: "/finance/invoices/:id/send",
+  EXPENSES_GET: "/finance/ledger",
+  EXPENSES_CREATE: "/finance/ledger",
 };
 
 export const ONLINE_EXAM_ENDPOINTS = {

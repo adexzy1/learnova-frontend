@@ -33,19 +33,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MultiSelect } from "@/components/shared/multi-select";
 
 import apiClient from "@/lib/api-client";
-import { CLASS_ENDPOINTS, SESSION_ENDPOINTS, TERM_ENDPOINTS } from "@/lib/api-routes";
+import { SESSION_ENDPOINTS, TERM_ENDPOINTS } from "@/lib/api-routes";
 import { queryKeys } from "@/app/constants/queryKeys";
-import type { FeeStructure, ClassLevel } from "@/types";
+import type { FeeStructure } from "@/types";
 import type { FeeStructurePayload } from "../_service/useFeeStructureService";
 import type { UseMutationResult } from "@tanstack/react-query";
+
+const FEE_CATEGORIES = [
+  "Tuition",
+  "PTA Levy",
+  "Lab Fee",
+  "Sports Fee",
+  "Exam Fee",
+  "Library Fee",
+  "Development Levy",
+  "Uniform",
+  "Books",
+  "Transport",
+  "Other",
+];
 
 const feeStructureSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
-  applicableClassIds: z.array(z.string()),
+  category: z.string().optional(),
   amount: z.coerce.number().min(0, "Amount must be a positive number"),
   termId: z.string().optional(),
   isActive: z.boolean(),
@@ -76,14 +89,6 @@ export function FeeStructureDialog({
   const [isTermSpecific, setIsTermSpecific] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState<string>("");
 
-  const { data: classesResponse } = useQuery<
-    AxiosResponse<{ data: Pick<ClassLevel, "id" | "name">[] }>
-  >({
-    queryKey: [queryKeys.SELECTABLE_CLASSES],
-    queryFn: () => apiClient.get(CLASS_ENDPOINTS.GET_SELECTABLE_CLASSES),
-    enabled: open,
-  });
-
   const { data: sessionsResponse } = useQuery<
     AxiosResponse<{ data: { id: string; name: string }[] }>
   >({
@@ -103,12 +108,6 @@ export function FeeStructureDialog({
     enabled: open && isTermSpecific && !!selectedSessionId,
   });
 
-  const classOptions =
-    classesResponse?.data.data.map((cls) => ({
-      value: cls.id,
-      label: cls.name,
-    })) ?? [];
-
   const sessionOptions = sessionsResponse?.data.data ?? [];
   const termOptions = termsResponse?.data.data ?? [];
 
@@ -117,7 +116,7 @@ export function FeeStructureDialog({
     defaultValues: {
       name: "",
       description: "",
-      applicableClassIds: [],
+      category: "",
       amount: 0,
       termId: undefined,
       isActive: true,
@@ -133,7 +132,7 @@ export function FeeStructureDialog({
         form.reset({
           name: initialData.name,
           description: initialData.description ?? "",
-          applicableClassIds: initialData.applicableClassIds ?? [],
+          category: initialData.category ?? "",
           amount: initialData.amount,
           termId: initialData.termId ?? undefined,
           isActive: initialData.isActive,
@@ -144,7 +143,7 @@ export function FeeStructureDialog({
         form.reset({
           name: "",
           description: "",
-          applicableClassIds: [],
+          category: "",
           amount: 0,
           termId: undefined,
           isActive: true,
@@ -161,18 +160,13 @@ export function FeeStructureDialog({
     }
   };
 
-  const handleSessionChange = (sessionId: string) => {
-    setSelectedSessionId(sessionId);
-    form.setValue("termId", undefined);
-  };
-
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   const onSubmit = (data: FeeStructureFormData) => {
     const payload: FeeStructurePayload = {
       name: data.name,
       description: data.description || undefined,
-      applicableClassIds: data.applicableClassIds,
+      category: data.category || undefined,
       amount: data.amount,
       termId: isTermSpecific ? data.termId : undefined,
       isActive: data.isActive,
@@ -193,12 +187,12 @@ export function FeeStructureDialog({
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? "Edit Fee Structure" : "Add Fee Structure"}
+            {isEdit ? "Edit Fee Item" : "Add Fee Item"}
           </DialogTitle>
           <DialogDescription>
             {isEdit
-              ? "Update the fee structure details below."
-              : "Create a new fee structure for your school."}
+              ? "Update this fee item. It will be available to select when generating invoices."
+              : "Create a fee item that can be added to any invoice."}
           </DialogDescription>
         </DialogHeader>
 
@@ -218,12 +212,56 @@ export function FeeStructureDialog({
               )}
             />
 
+            <div className="grid grid-cols-2 gap-3">
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Amount (₦)</FormLabel>
+                    <FormControl>
+                      <Input type="number" min={0} placeholder="0" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select
+                      value={field.value ?? ""}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {FEE_CATEGORIES.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Description <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Optional description..."
@@ -236,45 +274,11 @@ export function FeeStructureDialog({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="applicableClassIds"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Applicable Classes</FormLabel>
-                  <FormControl>
-                    <MultiSelect
-                      options={classOptions}
-                      selected={field.value}
-                      onChange={field.onChange}
-                      placeholder="Select classes (leave empty for all)"
-                      emptyMessage="No classes found."
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Amount (₦)</FormLabel>
-                  <FormControl>
-                    <Input type="number" min={0} placeholder="0" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div>
                 <p className="text-sm font-medium">Term Specific</p>
                 <p className="text-sm text-muted-foreground">
-                  Apply this fee to a specific term only
+                  Only show this item for a specific term
                 </p>
               </div>
               <Switch
@@ -289,7 +293,10 @@ export function FeeStructureDialog({
                   <FormLabel>Session</FormLabel>
                   <Select
                     value={selectedSessionId}
-                    onValueChange={handleSessionChange}
+                    onValueChange={(v) => {
+                      setSelectedSessionId(v);
+                      form.setValue("termId", undefined);
+                    }}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -297,9 +304,9 @@ export function FeeStructureDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {sessionOptions.map((session) => (
-                        <SelectItem key={session.id} value={session.id}>
-                          {session.name}
+                      {sessionOptions.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -323,9 +330,9 @@ export function FeeStructureDialog({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {termOptions.map((term) => (
-                            <SelectItem key={term.id} value={term.id}>
-                              {term.name}
+                          {termOptions.map((t) => (
+                            <SelectItem key={t.id} value={t.id}>
+                              {t.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -345,7 +352,7 @@ export function FeeStructureDialog({
                   <div>
                     <FormLabel className="text-base">Active</FormLabel>
                     <p className="text-sm text-muted-foreground">
-                      Enable this fee structure
+                      Available for selection when generating invoices
                     </p>
                   </div>
                   <FormControl>

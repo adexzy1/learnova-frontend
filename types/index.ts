@@ -461,6 +461,7 @@ export interface Invoice {
   status: "UNPAID" | "PARTIAL" | "PAID" | "OVERDUE";
   dueDate: string;
   createdAt: string;
+  paymentLink?: string | null;
 }
 
 export interface InvoiceItem {
@@ -639,8 +640,7 @@ export interface FeeStructure {
   name: string;
   description: string;
   amount: number;
-  applicableClassIds: string[];
-  applicableClasses: string[]; // resolved class names from backend
+  category: string | null;
   termId: string | null;
   isActive: boolean;
 }

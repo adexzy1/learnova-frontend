@@ -53,8 +53,8 @@ export function FeeStructureTable({
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead>Category</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead>Applicable Classes</TableHead>
               <TableHead className="text-right">Amount</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -64,21 +64,17 @@ export function FeeStructureTable({
             {feeStructures.map((fs) => (
               <TableRow key={fs.id}>
                 <TableCell className="font-medium">{fs.name}</TableCell>
+                <TableCell>
+                  {fs.category ? (
+                    <Badge variant="outline" className="text-xs font-normal">
+                      {fs.category}
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">—</span>
+                  )}
+                </TableCell>
                 <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
                   {fs.description || "—"}
-                </TableCell>
-                <TableCell>
-                  {fs.applicableClassIds.length === 0 ? (
-                    <Badge variant="secondary" className="font-normal">All Classes</Badge>
-                  ) : (
-                    <div className="flex flex-wrap gap-1">
-                      {fs.applicableClasses.map((name, i) => (
-                        <Badge key={fs.applicableClassIds[i]} variant="outline" className="text-xs font-normal">
-                          {name}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
                 </TableCell>
                 <TableCell className="text-right font-semibold tabular-nums">
                   {formatCurrency(fs.amount)}
@@ -132,7 +128,7 @@ export function FeeStructureTable({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Fee Structure</AlertDialogTitle>
+            <AlertDialogTitle>Delete Fee Item</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete &quot;{deleteTarget?.name}&quot;?
               This action cannot be undone.

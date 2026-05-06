@@ -23,8 +23,6 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell,
@@ -198,7 +196,7 @@ export function DashboardCharts({
               <EmptyState message="No revenue data available" />
             ) : (
               <ChartContainer config={revenueConfig} className="w-full">
-                <LineChart data={revenueData} accessibilityLayer>
+                <BarChart data={revenueData} accessibilityLayer>
                   <CartesianGrid vertical={false} />
                   <XAxis
                     dataKey="month"
@@ -237,23 +235,17 @@ export function DashboardCharts({
                     }
                   />
                   <ChartLegend content={<ChartLegendContent />} />
-                  <Line
-                    type="monotone"
+                  <Bar
                     dataKey="income"
-                    stroke="var(--color-income)"
-                    strokeWidth={2}
-                    dot={{ fill: "var(--color-income)", r: 3 }}
-                    activeDot={{ r: 5 }}
+                    fill="var(--color-income)"
+                    radius={[4, 4, 0, 0]}
                   />
-                  <Line
-                    type="monotone"
+                  <Bar
                     dataKey="expense"
-                    stroke="var(--color-expense)"
-                    strokeWidth={2}
-                    dot={{ fill: "var(--color-expense)", r: 3 }}
-                    activeDot={{ r: 5 }}
+                    fill="var(--color-expense)"
+                    radius={[4, 4, 0, 0]}
                   />
-                </LineChart>
+                </BarChart>
               </ChartContainer>
             )}
           </TabsContent>

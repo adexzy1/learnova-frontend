@@ -36,6 +36,7 @@ export const queryKeys = {
   PAYMENTS: "payments",
   LEDGER: "ledger",
   FEE_STRUCTURES: "fee-structures",
+  EXPENSES: "expenses",
   NOTIFICATIONS: "notifications",
   ONLINE_EXAMS: "online-exams",
   ONLINE_EXAM_DETAIL: "online-exam-detail",

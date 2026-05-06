@@ -9,10 +9,10 @@ import type { AxiosResponse } from "axios";
 export interface FeeStructurePayload {
   name: string;
   description?: string;
-  applicableClassIds: string[];
   amount: number;
   termId?: string;
   isActive: boolean;
+  category?: string;
 }
 
 const useFeeStructureService = () => {
@@ -32,10 +32,10 @@ const useFeeStructureService = () => {
       apiClient.post(FINANCE_ENDPOINTS.FEE_STRUCTURES_CREATE, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [queryKeys.FEE_STRUCTURES] });
-      toast.success("Fee structure created successfully");
+      toast.success("Fee item created successfully");
     },
     onError: (err: ApiError) => {
-      toast.error(err.message ?? "Failed to create fee structure");
+      toast.error(err.message ?? "Failed to create fee item");
     },
   });
 
@@ -47,10 +47,10 @@ const useFeeStructureService = () => {
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [queryKeys.FEE_STRUCTURES] });
-      toast.success("Fee structure updated successfully");
+      toast.success("Fee item updated successfully");
     },
     onError: (err: ApiError) => {
-      toast.error(err.message ?? "Failed to update fee structure");
+      toast.error(err.message ?? "Failed to update fee item");
     },
   });
 
@@ -61,10 +61,10 @@ const useFeeStructureService = () => {
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [queryKeys.FEE_STRUCTURES] });
-      toast.success("Fee structure deleted successfully");
+      toast.success("Fee item deleted successfully");
     },
     onError: (err: ApiError) => {
-      toast.error(err.message ?? "Failed to delete fee structure");
+      toast.error(err.message ?? "Failed to delete fee item");
     },
   });
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Plus,
   MoreHorizontal,
@@ -14,6 +15,9 @@ import {
   Eye,
   CreditCard,
   Printer,
+  Send,
+  Mail,
+  ChevronDown,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -65,9 +69,8 @@ import {
 import { PageHeader } from "@/components/shared/page-header";
 import { formatCurrency } from "@/lib/format";
 import useInvoicesService from "./_service/useInvoicesService";
-import { GenerateInvoicesDialog } from "./_components/GenerateInvoicesDialog";
-import { InvoiceDetailDialog } from "./_components/InvoiceDetailDialog";
 import { RecordPaymentDialog } from "./_components/RecordPaymentDialog";
+import { InvoiceDetailDialog } from "./_components/InvoiceDetailDialog";
 import type { Invoice } from "@/types";
 
 function getStatusBadge(status: string) {
@@ -102,61 +105,22 @@ function getStatusBadge(status: string) {
 }
 
 export default function InvoicesPage() {
+  const router = useRouter();
   const {
     invoices,
     isLoading,
     isStatsLoading,
     filters,
     setFilters,
-    generateMutation,
     deleteMutation,
     recordPaymentMutation,
-    fetchInvoiceById,
+    sendInvoiceMutation,
     stats,
   } = useInvoicesService();
 
-  const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
   const [deleteInvoiceId, setDeleteInvoiceId] = useState<string | null>(null);
-
-  // Invoice detail modal state
-  const [detailInvoice, setDetailInvoice] = useState<Invoice | null>(null);
-  const [detailOpen, setDetailOpen] = useState(false);
-  const [detailLoading, setDetailLoading] = useState(false);
-
-  // Record payment modal state
   const [paymentInvoice, setPaymentInvoice] = useState<Invoice | null>(null);
-  const [paymentOpen, setPaymentOpen] = useState(false);
-
-  const handleViewDetails = async (invoice: Invoice) => {
-    setDetailOpen(true);
-    setDetailLoading(true);
-    const full = await fetchInvoiceById(invoice.id);
-    if (full) {
-      setDetailInvoice({
-        ...full,
-        studentName: invoice.studentName,
-      });
-    } else {
-      setDetailOpen(false);
-    }
-    setDetailLoading(false);
-  };
-
-  const handleRecordPayment = (invoice: Invoice) => {
-    setPaymentInvoice(invoice);
-    setPaymentOpen(true);
-  };
-
-  const handlePrintInvoice = async (invoice: Invoice) => {
-    const full = await fetchInvoiceById(invoice.id);
-    if (full) {
-      setDetailInvoice({
-        ...full,
-        studentName: invoice.studentName,
-      });
-      setDetailOpen(true);
-    }
-  };
+  const [viewInvoice, setViewInvoice] = useState<Invoice | null>(null);
 
   return (
     <div className="space-y-6">
@@ -169,34 +133,46 @@ export default function InvoicesPage() {
           { label: "Invoices" },
         ]}
         actions={
-          <Button onClick={() => setGenerateDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Generate Invoices
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Generate Invoices
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => router.push("/finance/invoices/create")}
+              >
+                <Receipt className="mr-2 h-4 w-4" />
+                Generate
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  router.push("/finance/invoices/create?sendEmail=true")
+                }
+              >
+                <Mail className="mr-2 h-4 w-4" />
+                Generate and Send
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         }
       />
 
-      <GenerateInvoicesDialog
-        open={generateDialogOpen}
-        onOpenChange={setGenerateDialogOpen}
-        generateMutation={generateMutation}
-      />
-
       <InvoiceDetailDialog
-        invoice={detailInvoice}
-        open={detailOpen}
+        invoice={viewInvoice}
+        open={!!viewInvoice}
         onOpenChange={(open) => {
-          setDetailOpen(open);
-          if (!open) setDetailInvoice(null);
+          if (!open) setViewInvoice(null);
         }}
-        isLoading={detailLoading}
       />
 
       <RecordPaymentDialog
         invoice={paymentInvoice}
-        open={paymentOpen}
+        open={!!paymentInvoice}
         onOpenChange={(open) => {
-          setPaymentOpen(open);
           if (!open) setPaymentInvoice(null);
         }}
         paymentMutation={recordPaymentMutation}
@@ -396,12 +372,15 @@ export default function InvoicesPage() {
                   {invoices.map((invoice) => (
                     <TableRow key={invoice.id}>
                       <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
+                        <button
+                          className="flex items-center gap-2 hover:underline text-left"
+                          onClick={() => setViewInvoice(invoice)}
+                        >
                           <FileText className="h-4 w-4 text-muted-foreground" />
                           <span className="font-mono text-sm">
                             {invoice.invoiceNumber}
                           </span>
-                        </div>
+                        </button>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -451,24 +430,35 @@ export default function InvoicesPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
-                              onClick={() => handleViewDetails(invoice)}
+                              onClick={() => setViewInvoice(invoice)}
                             >
                               <Eye className="mr-2 h-4 w-4" />
-                              View Details
+                              View Invoice
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => handlePrintInvoice(invoice)}
+                              onClick={() => setViewInvoice(invoice)}
                             >
                               <Printer className="mr-2 h-4 w-4" />
                               Print Invoice
                             </DropdownMenuItem>
                             {invoice.status !== "PAID" && (
-                              <DropdownMenuItem
-                                onClick={() => handleRecordPayment(invoice)}
-                              >
-                                <CreditCard className="mr-2 h-4 w-4" />
-                                Record Payment
-                              </DropdownMenuItem>
+                              <>
+                                <DropdownMenuItem
+                                  onClick={() => setPaymentInvoice(invoice)}
+                                >
+                                  <CreditCard className="mr-2 h-4 w-4" />
+                                  Record Payment
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    sendInvoiceMutation.mutate(invoice.id)
+                                  }
+                                  disabled={sendInvoiceMutation.isPending}
+                                >
+                                  <Send className="mr-2 h-4 w-4" />
+                                  Send Invoice
+                                </DropdownMenuItem>
+                              </>
                             )}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
