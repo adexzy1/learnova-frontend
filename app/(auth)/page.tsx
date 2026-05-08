@@ -46,7 +46,7 @@ export default function LoginPage() {
   async function onSubmit(data: LoginFormValues) {
     setIsLoading(true);
     try {
-      const res = await axiosClient.post("/auth/login", data);
+      await axiosClient.post("/auth/login", data);
       toast.success("Welcome back!");
       router.push("/dashboard");
     } catch (error: any) {

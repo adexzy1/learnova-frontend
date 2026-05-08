@@ -217,14 +217,14 @@ export function AppSidebar({
   return (
     <aside
       className={cn(
-        "hidden lg:flex flex-col border-r bg-card transition-all duration-300",
+        "hidden lg:flex flex-col h-screen border-r bg-card transition-all duration-300",
         isCollapsed ? "w-16" : "w-64",
       )}
     >
       {/* Logo */}
       <div
         className={cn(
-          "flex items-center h-16 px-4 border-b",
+          "flex-shrink-0 flex items-center h-16 px-4 border-b",
           isCollapsed ? "justify-center" : "gap-2",
         )}
       >
@@ -238,9 +238,9 @@ export function AppSidebar({
         )}
       </div>
 
-      {/* Navigation */}
-      <ScrollArea className="flex-1 px-2 py-4">
-        <nav className="space-y-4">
+      {/* Navigation — flex-1 + min-h-0 lets the scroll area shrink within the flex column */}
+      <ScrollArea className="flex-1 min-h-0">
+        <nav className="px-2 py-4 space-y-4">
           {visibleNavigation.map((section) => (
             <NavSectionComponent
               key={section.title}

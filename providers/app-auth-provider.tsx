@@ -4,12 +4,14 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
 import type { NextAction, User } from "@/types";
 import axiosClient from "@/lib/axios-client";
 import { AUTH_ENDPOINTS } from "@/lib/api-routes";
+import { useAuthStore } from "@/lib/stores/auth-store";
 
 export interface AuthValue {
   user: User | null;

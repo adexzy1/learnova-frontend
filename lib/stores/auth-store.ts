@@ -18,21 +18,21 @@ export const useAuthStore = create<AuthStore>()(
       isAuthenticated: false,
       isLoading: true,
 
-      setUser: (user) => 
-        set({ 
-          user, 
+      setUser: (user) =>
+        set({
+          user,
           isAuthenticated: !!user,
-          isLoading: false 
+          isLoading: false,
         }),
 
-      setLoading: (isLoading) => 
+      setLoading: (isLoading) =>
         set({ isLoading }),
 
-      logout: () => 
-        set({ 
-          user: null, 
+      logout: () =>
+        set({
+          user: null,
           isAuthenticated: false,
-          isLoading: false 
+          isLoading: false,
         }),
 
       hasPermission: (permission) => {

@@ -1,7 +1,8 @@
 "use client";
 
-import { Download, Plus } from "lucide-react";
+import { Download, Plus, Upload } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -20,9 +21,11 @@ import { DataTablePagination } from "@/components/shared/table/pagination";
 import useStaffService from "./_service/useStaffService";
 import { getColumns } from "./_components/columns";
 import { DeactivateStaffDialog } from "./_components/deactivate-dialog";
+import { ImportStaffDialog } from "./_components/import-dialog";
 import { useSelectableRoles } from "@/shared/service/useSelectableRoles";
 
 export default function StaffPage() {
+  const [importOpen, setImportOpen] = useState(false);
   const roles = useSelectableRoles();
   const {
     staff,
@@ -55,6 +58,14 @@ export default function StaffPage() {
             <Button variant="outline" size="sm">
               <Download className="mr-2 h-4 w-4" />
               Export
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setImportOpen(true)}
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              Import
             </Button>
             <Button asChild size="sm">
               <Link href="/staff/new">
@@ -134,6 +145,8 @@ export default function StaffPage() {
         onConfirm={(id) => deactivateMutation.mutate(id)}
         isLoading={deactivateMutation.isPending}
       />
+
+      <ImportStaffDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>
   );
 }

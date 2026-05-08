@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { AxiosResponse } from "axios";
+import { fetchEventSource } from "@microsoft/fetch-event-source";
 import apiClient from "@/lib/api-client";
 import { NOTIFICATIONS_ENDPOINTS } from "@/lib/api-routes";
 import { queryKeys } from "@/app/constants/queryKeys";
@@ -17,7 +18,7 @@ import type { Notification, ApiError } from "@/types";
  */
 const SSE_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-export default function useNotificationsService() {
+export default function  useNotificationsService() {
   const queryClient = useQueryClient();
 
   // Initial load + cache of existing notifications
@@ -37,45 +38,42 @@ export default function useNotificationsService() {
 
   // SSE: listen for real-time notification events
   useEffect(() => {
-    const sseUrl = `${SSE_BASE_URL}/notifications/stream`;
-    const eventSource = new EventSource(sseUrl, { withCredentials: true });
+    const controller = new AbortController();
 
-    eventSource.addEventListener("notification", (event: MessageEvent) => {
-      try {
-        const newNotification: Notification = JSON.parse(event.data);
+    fetchEventSource(`${SSE_BASE_URL}/notifications/stream`, {
+      credentials: "include",
+      signal: controller.signal,
+      onmessage(event) {
+        if (event.event !== "notification") return;
+        try {
+          const newNotification: Notification = JSON.parse(event.data);
 
-        queryClient.setQueryData<AxiosResponse<{ data: Notification[] }>>(
-          [queryKeys.NOTIFICATIONS],
-          (old) => {
-            if (!old) return old;
-            // Avoid duplicates
-            const exists = old.data.data.some(
-              (n) => n.id === newNotification.id,
-            );
-            if (exists) return old;
+          queryClient.setQueryData<AxiosResponse<{ data: Notification[] }>>(
+            [queryKeys.NOTIFICATIONS],
+            (old) => {
+              if (!old) return old;
+              const exists = old.data.data.some(
+                (n) => n.id === newNotification.id,
+              );
+              if (exists) return old;
 
-            return {
-              ...old,
-              data: {
-                ...old.data,
-                data: [newNotification, ...old.data.data],
-              },
-            };
-          },
-        );
-      } catch (error) {
-        console.error("Failed to parse notification event:", error);
-        // Silently ignore parse errors
-      }
+              return {
+                ...old,
+                data: {
+                  ...old.data,
+                  data: [newNotification, ...old.data.data],
+                },
+              };
+            },
+          );
+        } catch (error) {
+          console.error("Failed to parse notification event:", error);
+        }
+      },
     });
 
-    // eventSource.onerror = () => {
-    //   // EventSource auto-reconnects; optionally refetch on reconnect
-    //   queryClient.invalidateQueries({ queryKey: [queryKeys.NOTIFICATIONS] });
-    // };
-
     return () => {
-      eventSource.close();
+      controller.abort();
     };
   }, [queryClient]);
 

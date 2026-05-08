@@ -58,33 +58,29 @@ export async function axiosServer(): Promise<AxiosInstance> {
           },
         );
 
-        // Extract new cookies from the refresh response
+        // Merge the new access_token + refresh_token Set-Cookie headers into the retry
         const setCookieHeaders = refreshResponse.headers["set-cookie"];
-        if (setCookieHeaders) {
-          // Build a new cookie header combining original cookies with refreshed ones
-          const newCookies = setCookieHeaders
-            .map((cookie: string) => cookie.split(";")[0])
-            .join("; ");
+        if (!setCookieHeaders) {
+          return Promise.reject(error);
+        }
 
-          // Merge: new cookies override old ones
+        if (originalRequest.headers) {
           const cookieMap = new Map<string, string>();
           cookieHeader.split("; ").forEach((c) => {
             const [name, ...rest] = c.split("=");
             cookieMap.set(name, rest.join("="));
           });
-          newCookies.split("; ").forEach((c: string) => {
-            const [name, ...rest] = c.split("=");
-            cookieMap.set(name, rest.join("="));
-          });
-
-          const mergedCookieHeader = Array.from(cookieMap.entries())
+          setCookieHeaders
+            .map((cookie: string) => cookie.split(";")[0])
+            .join("; ")
+            .split("; ")
+            .forEach((c: string) => {
+              const [name, ...rest] = c.split("=");
+              cookieMap.set(name, rest.join("="));
+            });
+          originalRequest.headers.Cookie = Array.from(cookieMap.entries())
             .map(([name, value]) => `${name}=${value}`)
             .join("; ");
-
-          // Retry with the updated cookies
-          if (originalRequest.headers) {
-            originalRequest.headers.Cookie = mergedCookieHeader;
-          }
         }
 
         return instance(originalRequest);

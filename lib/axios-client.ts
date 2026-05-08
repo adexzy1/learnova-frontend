@@ -14,7 +14,7 @@ const axiosClient = axios.create({
 });
 
 // ─────────────────────────────────────────────────────────────
-// Token Refresh Handling (HTTP-only cookies)
+// 401 handling: refresh cookie → retry original request
 // ─────────────────────────────────────────────────────────────
 
 let isRefreshing = false;
@@ -43,10 +43,6 @@ axiosClient.interceptors.response.use(
       _retry?: boolean;
     };
 
-    // Ignore if:
-    // - not 401
-    // - already retried
-    // - auth endpoints
     if (
       error.response?.status !== 401 ||
       originalRequest._retry ||
@@ -56,7 +52,6 @@ axiosClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Queue requests while refreshing
     if (isRefreshing) {
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject, config: originalRequest });
@@ -67,18 +62,13 @@ axiosClient.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      // ✅ Use same instance (important)
       await axiosClient.post("/auth/refresh");
-
-      // Retry queued requests
+      // New access_token cookie is set by the server automatically via withCredentials
       processQueue(null);
-
-      // Retry original request
       return axiosClient(originalRequest);
     } catch (refreshError) {
       processQueue(refreshError as AxiosError);
 
-      // Redirect on failure
       if (typeof window !== "undefined") {
         window.location.href = "/";
       }

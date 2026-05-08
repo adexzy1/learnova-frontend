@@ -69,6 +69,8 @@ export const STUDENT_ENDPOINTS = {
   CREATE_STUDENT: "/people/students",
   UPDATE_STUDENT: "/people/students/:id",
   DELETE_STUDENT: "/people/students/:id",
+  IMPORT_STUDENTS: "/people/students/import",
+  IMPORT_STUDENTS_TEMPLATE: "/people/students/import/template",
 };
 
 export const STAFF_ENDPOINTS = {
@@ -77,6 +79,8 @@ export const STAFF_ENDPOINTS = {
   CREATE_STAFF: "/people/staff",
   UPDATE_STAFF: "/people/staff/:id",
   DEACTIVATE_STAFF: "/people/staff/:id/deactivate",
+  IMPORT_STAFF: "/people/staff/import",
+  IMPORT_STAFF_TEMPLATE: "/people/staff/import/template",
 };
 
 export const TENANT_ENDPOINTS = {

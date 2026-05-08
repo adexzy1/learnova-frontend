@@ -1,7 +1,8 @@
 "use client";
 
-import { Download, Plus } from "lucide-react";
+import { Download, Plus, Upload } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import { DataTable } from "@/components/shared/table/data-table";
 import useStudentService from "./_service/useStudentService";
 import { getColumns } from "./_components/columns";
 import { DeleteStudentDialog } from "./_components/delete-dialog";
+import { ImportStudentsDialog } from "./_components/import-dialog";
 import { DataTableToolbar } from "@/components/shared/table/data-table-toolbar";
 import { DataTableSearch } from "@/components/shared/table/data-table-search";
 import { DataTablePagination } from "@/components/shared/table/pagination";
@@ -28,6 +30,8 @@ import { AxiosResponse } from "axios";
 import { ClassArm } from "@/types";
 
 export default function StudentsPage() {
+  const [importOpen, setImportOpen] = useState(false);
+
   const {
     students,
     isLoadingStudents,
@@ -68,6 +72,14 @@ export default function StudentsPage() {
             <Button variant="outline" size="sm">
               <Download className="mr-2 h-4 w-4" />
               Export
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setImportOpen(true)}
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              Import
             </Button>
             <Button asChild size="sm">
               <Link href="/students/new">
@@ -148,6 +160,8 @@ export default function StudentsPage() {
         onConfirm={(id) => deleteMutation.mutate(id)}
         isLoading={deleteMutation.isPending}
       />
+
+      <ImportStudentsDialog open={importOpen} onOpenChange={setImportOpen} />
     </div>
   );
 }

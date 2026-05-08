@@ -16,6 +16,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/providers/app-auth-provider";
 import axiosClient from "@/lib/axios-client";
+import { useAuthStore } from "@/lib/stores/auth-store";
 import { useTenant } from "@/providers/tenant-provider";
 
 export function OnboardingHeader() {
@@ -26,10 +27,10 @@ export function OnboardingHeader() {
   const handleLogout = async () => {
     try {
       await axiosClient.post("/auth/logout");
-      router.push("/");
-      router.refresh();
-    } catch (error) {
-      // Even if it fails, we should probably redirect
+    } catch {
+      // Even if the server call fails, clear local state and redirect
+    } finally {
+      useAuthStore.getState().setAccessToken(null);
       router.push("/");
       router.refresh();
     }
