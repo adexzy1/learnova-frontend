@@ -20,13 +20,15 @@ export const useEditStudentService = (studentId?: string) => {
   const id = studentId || (params.id as string);
 
   const { data: studentDetails, isLoading: isLoadingDetails } = useQuery<
-    AxiosResponse<Student>
+    AxiosResponse<{data:Student}>
   >({
     queryKey: [queryKeys.STUDENTS, id],
     queryFn: async () =>
       axiosClient.get(STUDENT_ENDPOINTS.GET_STUDENT_BY_ID.replace(":id", id)),
     enabled: !!id,
   });
+
+  console.log(studentDetails?.data?.data);
 
   const form = useForm<StudentFormData>({
     resolver: zodResolver(studentSchema),
@@ -49,7 +51,7 @@ export const useEditStudentService = (studentId?: string) => {
   // Sync form with data
   useEffect(() => {
     if (studentDetails?.data) {
-      const student = studentDetails.data;
+      const student = studentDetails.data.data;
       form.reset({
         firstName: student.firstName,
         lastName: student.lastName,
@@ -119,7 +121,7 @@ export const useEditStudentService = (studentId?: string) => {
   });
 
   return {
-    studentDetails: studentDetails?.data,
+    studentDetails: studentDetails?.data?.data,
     isLoadingDetails,
     form,
     mutation,

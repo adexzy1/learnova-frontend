@@ -25,7 +25,7 @@ export default function RolesManager() {
     return <div className="text-red-500 text-sm">Error: {error?.message}</div>;
   }
 
-  console.log(roles);
+ 
 
   return (
     <div>

@@ -37,6 +37,7 @@ function getStatusBadge(status: Student["status"]) {
 }
 
 export function StudentDetails({ student }: StudentDetailsProps) {
+  console.log(student);
   return (
     <div className="space-y-6">
       <div className="grid gap-6 md:grid-cols-3">
